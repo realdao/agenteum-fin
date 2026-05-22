@@ -6,7 +6,7 @@
 
 **Architecture:** Mirror `D:\workspace\agenteum\agenteum-net`: FastAPI owns process and health, FastMCP exposes `/mcp/full`, services own validation/provider selection/fallback, providers own one external data source each, and Pydantic schemas define the unified contracts. Live finance providers are not used by default tests; providers are tested with fixtures, fake clients, or `httpx.MockTransport`.
 
-**Tech Stack:** Python 3.11+, uv, FastAPI, official MCP Python SDK, Pydantic v2, pydantic-settings, httpx, mootdx, pandas, pytest, pytest-asyncio, ruff, opencode E2E.
+**Tech Stack:** Python 3.11+, uv, FastAPI, official MCP Python SDK, Pydantic v2, pydantic-settings, httpx, pandas, pytest, pytest-asyncio, ruff, opencode E2E. `mootdx` is lazy-loaded by provider modules rather than installed as a core dependency because its current PyPI metadata conflicts with the MCP SDK's `httpx` requirement.
 
 ---
 
@@ -169,7 +169,6 @@ dependencies = [
   "fastapi>=0.115,<1",
   "httpx>=0.28,<1",
   "mcp>=1.27.1,<2",
-  "mootdx>=0.10,<1",
   "pandas>=2.2,<3",
   "pydantic>=2.11,<3",
   "pydantic-settings>=2.9,<3",

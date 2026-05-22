@@ -454,7 +454,6 @@ Required runtime dependencies:
 fastapi>=0.115,<1
 httpx>=0.28,<1
 mcp>=1.27.1,<2
-mootdx>=0.10,<1
 pandas>=2.2,<3
 pydantic>=2.11,<3
 pydantic-settings>=2.9,<3
@@ -469,6 +468,8 @@ pytest>=8.3,<9
 pytest-asyncio>=0.26,<1
 ruff>=0.11,<1
 ```
+
+`mootdx` is not a core install dependency in v1 because the current PyPI release metadata constrains `httpx` and conflicts with the MCP SDK. The provider implementation must lazy-import `mootdx` and return `provider_unavailable` when it is not installed. Runtime deployments that need live A-share K-line or F10 access can install a verified `mootdx` wheel separately after the core server dependencies are installed.
 
 `akshare` is not a v1 dependency.
 
