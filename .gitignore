@@ -68,3 +68,7 @@ Thumbs.db
 .claude/
 .commandcode/
 CLAUDE.md
+
+# Generated probe results
+playground/provider_probe_results.json
+docs/provider_probe_results.json
