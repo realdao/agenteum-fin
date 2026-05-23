@@ -20,3 +20,9 @@ def test_health_endpoint_is_lightweight():
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_create_app_with_default_settings_does_not_call_live_providers():
+    app = create_app(Settings())
+
+    assert app.title == "Agenteum Fin"
