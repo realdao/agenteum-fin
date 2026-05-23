@@ -15,6 +15,12 @@ class StockKlineService:
 
     async def get_kline(self, request: KlineRequest) -> KlineResponse:
         symbol = normalize_symbol(request.symbol)
+        if request.adjust != "none":
+            raise ProviderError(
+                error_type=ErrorType.UNSUPPORTED_ADJUSTMENT,
+                provider=None,
+                message="Adjusted K-line data is not supported by the v1 default provider.",
+            )
         if symbol.market == "hk" and self.hk_provider is None:
             raise ProviderError(
                 error_type=ErrorType.UNSUPPORTED_MARKET,
