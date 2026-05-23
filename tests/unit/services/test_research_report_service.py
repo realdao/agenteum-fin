@@ -29,3 +29,13 @@ async def test_research_report_service_returns_a_share_response():
 
     assert response.provider == "eastmoney"
     assert response.data.symbol.display_symbol == "600519.SH"
+
+
+@pytest.mark.asyncio
+async def test_research_report_service_rejects_unconfigured_provider():
+    service = ResearchReportService(provider=None)
+
+    with pytest.raises(ProviderError) as raised:
+        await service.get_reports("600519", page_size=20)
+
+    assert raised.value.error_type == ErrorType.CONFIG_ERROR

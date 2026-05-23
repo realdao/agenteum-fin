@@ -10,7 +10,9 @@ from src.utils.symbols import normalize_symbol
 
 @pytest.mark.asyncio
 async def test_eastmoney_maps_research_report_fields():
-    fixture = json.loads(Path("tests/fixtures/eastmoney_research_reports.json").read_text(encoding="utf-8"))
+    fixture = json.loads(
+        Path("tests/fixtures/eastmoney_research_reports.json").read_text(encoding="utf-8")
+    )
 
     async def handler(request: httpx.Request) -> httpx.Response:
         assert dict(request.url.params)["code"] == "600519"

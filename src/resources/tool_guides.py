@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from importlib.resources import files
 
-
 RESOURCE_URIS = {
     "agenteum-fin://tools/stock-tools-guide": "stock-tools-guide.md",
     "agenteum-fin://providers/capabilities": "providers-capabilities.md",

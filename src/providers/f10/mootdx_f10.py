@@ -6,7 +6,6 @@ from typing import Any
 from src.errors import ErrorType, ProviderError
 from src.utils.symbols import NormalizedSymbol
 
-
 SECTION_MAP = {
     "company_profile": "公司概况",
     "latest_notice": "最新提示",

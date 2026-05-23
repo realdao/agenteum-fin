@@ -77,6 +77,7 @@ class ProviderError(Exception):
         http_status: int | None = None,
         request_id: str | None = None,
         payload: Any = None,
+        fallbacks: list[Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.error_type = error_type
@@ -85,6 +86,7 @@ class ProviderError(Exception):
         self.http_status = http_status
         self.request_id = request_id
         self.payload = payload
+        self.fallbacks = fallbacks or []
 
     def safe_repr(self) -> dict[str, Any]:
         return {

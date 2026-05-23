@@ -1,10 +1,16 @@
+import pytest
+from pydantic import ValidationError
+
 from src.schemas import (
     ErrorDetail,
+    F10Request,
     FallbackRecord,
+    FinancialStatementsRequest,
     KlineBar,
     KlineRequest,
     KlineResponse,
     NormalizedSymbol,
+    PageSizeRequest,
     ProviderStatus,
     StockProfileData,
     ToolErrorResponse,
@@ -26,6 +32,22 @@ def test_kline_request_defaults():
     assert request.period == "day"
     assert request.adjust == "none"
     assert request.limit is None
+
+
+def test_public_request_numeric_fields_must_be_positive():
+    with pytest.raises(ValidationError):
+        KlineRequest(symbol="600519", limit=0)
+    with pytest.raises(ValidationError):
+        FinancialStatementsRequest(symbol="600519", periods=0)
+    with pytest.raises(ValidationError):
+        F10Request(symbol="600519", max_chars=0)
+    with pytest.raises(ValidationError):
+        PageSizeRequest(symbol="600519", page_size=0)
+
+
+def test_kline_request_rejects_compact_dates():
+    with pytest.raises(ValidationError):
+        KlineRequest(symbol="600519", start_date="20260522")
 
 
 def test_kline_response_serializes_unified_shape():

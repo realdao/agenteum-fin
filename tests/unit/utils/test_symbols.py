@@ -28,6 +28,7 @@ def test_normalizes_hong_kong_variants():
         "symbol": "00700",
         "display_symbol": "00700.HK",
     }
+    assert normalize_symbol("00001").display_symbol == "00001.HK"
     assert normalize_symbol("hk00700").display_symbol == "00700.HK"
     assert normalize_symbol("00700.HK").display_symbol == "00700.HK"
 

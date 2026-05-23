@@ -3,14 +3,17 @@ from __future__ import annotations
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from pydantic import ValidationError
 
-from src.errors import ProviderError, is_recoverable
+from src.errors import ErrorType, ProviderError, is_recoverable
 from src.resources.tool_guides import RESOURCE_URIS, resource_text_by_uri
 from src.schemas import (
     ErrorDetail,
     F10Request,
+    FallbackRecord,
     FinancialStatementsRequest,
     KlineRequest,
+    PageSizeRequest,
     ToolErrorResponse,
 )
 
@@ -54,6 +57,8 @@ def create_mcp_server(
             return response.model_dump(by_alias=True)
         except ProviderError as exc:
             return _provider_error_response(exc).model_dump(by_alias=True)
+        except ValidationError as exc:
+            return _validation_error_response(exc).model_dump(by_alias=True)
 
     @mcp.tool()
     async def stock_profile(symbol: str) -> dict:
@@ -63,6 +68,8 @@ def create_mcp_server(
             return response.model_dump(by_alias=True)
         except ProviderError as exc:
             return _provider_error_response(exc).model_dump(by_alias=True)
+        except ValidationError as exc:
+            return _validation_error_response(exc).model_dump(by_alias=True)
 
     @mcp.tool()
     async def stock_financial_statements(
@@ -81,6 +88,8 @@ def create_mcp_server(
             return response.model_dump(by_alias=True)
         except ProviderError as exc:
             return _provider_error_response(exc).model_dump(by_alias=True)
+        except ValidationError as exc:
+            return _validation_error_response(exc).model_dump(by_alias=True)
 
     @mcp.tool()
     async def stock_f10(
@@ -99,24 +108,38 @@ def create_mcp_server(
             return response.model_dump(by_alias=True)
         except ProviderError as exc:
             return _provider_error_response(exc).model_dump(by_alias=True)
+        except ValidationError as exc:
+            return _validation_error_response(exc).model_dump(by_alias=True)
 
     @mcp.tool()
     async def stock_announcements(symbol: str, page_size: int = 20) -> dict:
         """Return A-share listed-company announcements."""
         try:
-            response = await announcement_service.get_announcements(symbol, page_size=page_size)
+            request = PageSizeRequest(symbol=symbol, page_size=page_size)
+            response = await announcement_service.get_announcements(
+                request.symbol,
+                page_size=request.page_size,
+            )
             return response.model_dump(by_alias=True)
         except ProviderError as exc:
             return _provider_error_response(exc).model_dump(by_alias=True)
+        except ValidationError as exc:
+            return _validation_error_response(exc).model_dump(by_alias=True)
 
     @mcp.tool()
     async def stock_research_reports(symbol: str, page_size: int = 20) -> dict:
         """Return A-share sell-side research report metadata."""
         try:
-            response = await research_report_service.get_reports(symbol, page_size=page_size)
+            request = PageSizeRequest(symbol=symbol, page_size=page_size)
+            response = await research_report_service.get_reports(
+                request.symbol,
+                page_size=request.page_size,
+            )
             return response.model_dump(by_alias=True)
         except ProviderError as exc:
             return _provider_error_response(exc).model_dump(by_alias=True)
+        except ValidationError as exc:
+            return _validation_error_response(exc).model_dump(by_alias=True)
 
     for uri in RESOURCE_URIS:
         _register_resource(mcp, uri)
@@ -133,8 +156,30 @@ def _provider_error_response(exc: ProviderError) -> ToolErrorResponse:
             provider=exc.provider,
             retryable=is_recoverable(exc.error_type),
         ),
+        fallbacks=_fallbacks_from_error(exc),
+    )
+
+
+def _validation_error_response(exc: ValidationError) -> ToolErrorResponse:
+    first_error = exc.errors()[0] if exc.errors() else {}
+    field = ".".join(str(part) for part in first_error.get("loc", []))
+    message = first_error.get("msg", "Invalid request")
+    if field:
+        message = f"Invalid parameter '{field}': {message}"
+    return ToolErrorResponse(
+        status="error",
+        error=ErrorDetail(
+            type=ErrorType.INVALID_REQUEST.value,
+            message=message,
+            provider=None,
+            retryable=False,
+        ),
         fallbacks=[],
     )
+
+
+def _fallbacks_from_error(exc: ProviderError) -> list[FallbackRecord]:
+    return [fallback for fallback in exc.fallbacks if isinstance(fallback, FallbackRecord)]
 
 
 def _register_resource(mcp: FastMCP, uri: str) -> None:

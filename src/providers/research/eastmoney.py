@@ -8,7 +8,6 @@ from src.schemas import ResearchReportItem
 from src.utils.http import get_json
 from src.utils.symbols import NormalizedSymbol
 
-
 EASTMONEY_REPORT_URL = "https://reportapi.eastmoney.com/report/list"
 PDF_BASE_URL = "https://pdf.dfcfw.com/pdf/H3_{info_code}_1.pdf"
 

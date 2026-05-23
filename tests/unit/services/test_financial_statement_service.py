@@ -1,7 +1,11 @@
 import pytest
 
 from src.errors import ErrorType, ProviderError
-from src.schemas import FinancialStatementGroup, FinancialStatementPeriod, FinancialStatementsRequest
+from src.schemas import (
+    FinancialStatementGroup,
+    FinancialStatementPeriod,
+    FinancialStatementsRequest,
+)
 from src.services.financial_statement_service import FinancialStatementService
 
 

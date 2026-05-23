@@ -9,7 +9,6 @@ from src.schemas import AnnouncementItem
 from src.utils.http import post_form_json
 from src.utils.symbols import NormalizedSymbol
 
-
 CNINFO_BASE_URL = "https://www.cninfo.com.cn/new/hisAnnouncement/query"
 CNINFO_STATIC_BASE = "https://static.cninfo.com.cn/"
 

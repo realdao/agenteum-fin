@@ -7,7 +7,6 @@ from src.schemas import FinancialLineItem, FinancialStatementGroup, FinancialSta
 from src.utils.http import get_json
 from src.utils.symbols import NormalizedSymbol
 
-
 SINA_SOURCE_BY_STATEMENT = {
     "income": "lrb",
     "balance_sheet": "fzb",

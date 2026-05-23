@@ -9,7 +9,6 @@ from src.errors import ErrorType, ProviderError
 from src.schemas import KlineBar, KlineData, KlineRequest
 from src.utils.symbols import NormalizedSymbol
 
-
 PERIOD_TO_MOOTDX_FREQUENCY = {
     "day": "day",
     "week": "week",
@@ -21,6 +20,7 @@ PERIOD_TO_MOOTDX_FREQUENCY = {
 
 class MootdxKlineProvider:
     name = "mootdx"
+    supported_adjustments = {"none"}
 
     def __init__(self, *, quotes: Any | None = None) -> None:
         self.quotes = quotes
@@ -43,6 +43,12 @@ class MootdxKlineProvider:
         return self.quotes
 
     async def get_kline(self, symbol: NormalizedSymbol, request: KlineRequest) -> KlineData:
+        if request.period not in PERIOD_TO_MOOTDX_FREQUENCY:
+            raise ProviderError(
+                error_type=ErrorType.UNSUPPORTED_PERIOD,
+                provider=self.name,
+                message=f"Unsupported K-line period: {request.period}",
+            )
         frequency = PERIOD_TO_MOOTDX_FREQUENCY[request.period]
         offset = request.limit or 800
         try:
@@ -60,7 +66,11 @@ class MootdxKlineProvider:
                 provider=self.name,
                 message=str(exc),
             ) from exc
-        bars = _frame_to_bars(frame)
+        bars = _filter_bars(
+            _frame_to_bars(frame),
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
         if not bars:
             raise ProviderError(
                 error_type=ErrorType.MARKET_CLOSED_OR_EMPTY,
@@ -101,3 +111,17 @@ def _float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _filter_bars(
+    bars: list[KlineBar],
+    *,
+    start_date: str | None,
+    end_date: str | None,
+) -> list[KlineBar]:
+    return [
+        bar
+        for bar in bars
+        if (start_date is None or bar.date >= start_date)
+        and (end_date is None or bar.date <= end_date)
+    ]

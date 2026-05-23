@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-22T14:58:50.850194+00:00",
+  "generated_at": "2026-05-23T01:31:53.986249+00:00",
   "notes": [
     "This is a live provider probe for architecture brainstorming only.",
     "Some endpoints may be trading-calendar or region sensitive."
@@ -7,7 +7,7 @@
   "probes": {
     "tencent_quote_a_share": {
       "status": "ok",
-      "elapsed_ms": 203.8,
+      "elapsed_ms": 204.5,
       "data": {
         "sh600519": {
           "name": "贵州茅台",
@@ -47,7 +47,7 @@
     },
     "tencent_quote_hk": {
       "status": "ok",
-      "elapsed_ms": 149.1,
+      "elapsed_ms": 152.1,
       "data": {
         "hk00700": {
           "name": "腾讯控股",
@@ -87,37 +87,37 @@
     },
     "eastmoney_stock_info_a_share": {
       "status": "error",
-      "elapsed_ms": 373.7,
+      "elapsed_ms": 1018.8,
       "error": {
-        "type": "ProxyError",
-        "message": "HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?fltt=2&invt=2&fields=f57%2Cf58%2Cf84%2Cf85%2Cf127%2Cf116%2Cf117%2Cf189%2Cf43&secid=1.600519 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))",
+        "type": "RemoteProtocolError",
+        "message": "Server disconnected without sending a response.",
         "traceback_tail": [
-          "    r = adapter.send(request, **kwargs)",
-          "        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-          "  File \"D:\\devroot\\python\\venv\\Lib\\site-packages\\requests\\adapters.py\", line 671, in send",
-          "    raise ProxyError(e, request=request)",
-          "requests.exceptions.ProxyError: HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?fltt=2&invt=2&fields=f57%2Cf58%2Cf84%2Cf85%2Cf127%2Cf116%2Cf117%2Cf189%2Cf43&secid=1.600519 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))"
+          "  File \"C:\\Program Files\\Python312\\Lib\\contextlib.py\", line 158, in __exit__",
+          "    self.gen.throw(value)",
+          "  File \"D:\\workspace\\agenteum\\agenteum-fin\\.venv\\Lib\\site-packages\\httpx\\_transports\\default.py\", line 118, in map_httpcore_exceptions",
+          "    raise mapped_exc(message) from exc",
+          "httpx.RemoteProtocolError: Server disconnected without sending a response."
         ]
       }
     },
     "eastmoney_stock_info_hk": {
       "status": "error",
-      "elapsed_ms": 360.7,
+      "elapsed_ms": 869.7,
       "error": {
-        "type": "ProxyError",
-        "message": "HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?fltt=2&invt=2&fields=f57%2Cf58%2Cf43%2Cf44%2Cf45%2Cf46%2Cf47%2Cf48%2Cf60%2Cf116%2Cf117%2Cf127&secid=116.00700 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))",
+        "type": "RemoteProtocolError",
+        "message": "Server disconnected without sending a response.",
         "traceback_tail": [
-          "    r = adapter.send(request, **kwargs)",
-          "        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-          "  File \"D:\\devroot\\python\\venv\\Lib\\site-packages\\requests\\adapters.py\", line 671, in send",
-          "    raise ProxyError(e, request=request)",
-          "requests.exceptions.ProxyError: HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?fltt=2&invt=2&fields=f57%2Cf58%2Cf43%2Cf44%2Cf45%2Cf46%2Cf47%2Cf48%2Cf60%2Cf116%2Cf117%2Cf127&secid=116.00700 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))"
+          "  File \"C:\\Program Files\\Python312\\Lib\\contextlib.py\", line 158, in __exit__",
+          "    self.gen.throw(value)",
+          "  File \"D:\\workspace\\agenteum\\agenteum-fin\\.venv\\Lib\\site-packages\\httpx\\_transports\\default.py\", line 118, in map_httpcore_exceptions",
+          "    raise mapped_exc(message) from exc",
+          "httpx.RemoteProtocolError: Server disconnected without sending a response."
         ]
       }
     },
     "baidu_kline_with_ma_a_share": {
       "status": "ok",
-      "elapsed_ms": 613.3,
+      "elapsed_ms": 1144.8,
       "data": {
         "result_code": "0",
         "keys": [
@@ -150,37 +150,37 @@
     },
     "eastmoney_daily_kline_a_share": {
       "status": "error",
-      "elapsed_ms": 365.8,
+      "elapsed_ms": 911.2,
       "error": {
-        "type": "ProxyError",
-        "message": "HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?secid=1.600519&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=101&fqt=1&beg=20200101&end=20500101&lmt=5 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))",
+        "type": "RemoteProtocolError",
+        "message": "Server disconnected without sending a response.",
         "traceback_tail": [
-          "    r = adapter.send(request, **kwargs)",
-          "        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-          "  File \"D:\\devroot\\python\\venv\\Lib\\site-packages\\requests\\adapters.py\", line 671, in send",
-          "    raise ProxyError(e, request=request)",
-          "requests.exceptions.ProxyError: HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?secid=1.600519&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=101&fqt=1&beg=20200101&end=20500101&lmt=5 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))"
+          "  File \"C:\\Program Files\\Python312\\Lib\\contextlib.py\", line 158, in __exit__",
+          "    self.gen.throw(value)",
+          "  File \"D:\\workspace\\agenteum\\agenteum-fin\\.venv\\Lib\\site-packages\\httpx\\_transports\\default.py\", line 118, in map_httpcore_exceptions",
+          "    raise mapped_exc(message) from exc",
+          "httpx.RemoteProtocolError: Server disconnected without sending a response."
         ]
       }
     },
     "eastmoney_daily_kline_hk": {
       "status": "error",
-      "elapsed_ms": 380.4,
+      "elapsed_ms": 870.2,
       "error": {
-        "type": "ProxyError",
-        "message": "HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?secid=116.00700&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=101&fqt=1&beg=20200101&end=20500101&lmt=5 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))",
+        "type": "RemoteProtocolError",
+        "message": "Server disconnected without sending a response.",
         "traceback_tail": [
-          "    r = adapter.send(request, **kwargs)",
-          "        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-          "  File \"D:\\devroot\\python\\venv\\Lib\\site-packages\\requests\\adapters.py\", line 671, in send",
-          "    raise ProxyError(e, request=request)",
-          "requests.exceptions.ProxyError: HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?secid=116.00700&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=101&fqt=1&beg=20200101&end=20500101&lmt=5 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))"
+          "  File \"C:\\Program Files\\Python312\\Lib\\contextlib.py\", line 158, in __exit__",
+          "    self.gen.throw(value)",
+          "  File \"D:\\workspace\\agenteum\\agenteum-fin\\.venv\\Lib\\site-packages\\httpx\\_transports\\default.py\", line 118, in map_httpcore_exceptions",
+          "    raise mapped_exc(message) from exc",
+          "httpx.RemoteProtocolError: Server disconnected without sending a response."
         ]
       }
     },
     "eastmoney_reports": {
       "status": "ok",
-      "elapsed_ms": 387.6,
+      "elapsed_ms": 895.5,
       "data": {
         "count": 10,
         "total_page": 76,
@@ -211,7 +211,7 @@
     },
     "sina_income_statement": {
       "status": "ok",
-      "elapsed_ms": 414.3,
+      "elapsed_ms": 917.4,
       "data": {
         "report_type": "lrb",
         "report_count": "102",
@@ -1954,7 +1954,7 @@
     },
     "sina_balance_sheet": {
       "status": "ok",
-      "elapsed_ms": 380.0,
+      "elapsed_ms": 904.3,
       "data": {
         "report_type": "fzb",
         "report_count": "102",
@@ -5105,7 +5105,7 @@
     },
     "sina_cash_flow": {
       "status": "ok",
-      "elapsed_ms": 376.4,
+      "elapsed_ms": 869.4,
       "data": {
         "report_type": "llb",
         "report_count": "98",
@@ -6562,7 +6562,7 @@
     },
     "cninfo_announcements": {
       "status": "ok",
-      "elapsed_ms": 435.7,
+      "elapsed_ms": 916.5,
       "data": {
         "count": 5,
         "sample": [
@@ -6589,7 +6589,7 @@
     },
     "baidu_concept_blocks": {
       "status": "ok",
-      "elapsed_ms": 401.5,
+      "elapsed_ms": 891.9,
       "data": {
         "result_code": "10003",
         "block_count": 0,
@@ -6600,48 +6600,48 @@
     },
     "ths_hot_reason": {
       "status": "ok",
-      "elapsed_ms": 71.5,
+      "elapsed_ms": 861.2,
       "data": {
-        "date": "2026-05-22",
+        "date": "2026-05-23",
         "errocode": 0,
-        "count": 136,
+        "count": 76,
         "sample": [
           {
             "code": "000670",
             "name": "盈方微",
             "reason": "长江存储代理+半导体分销+重大资产重组",
-            "change_pct": null
-          },
-          {
-            "code": "603261",
-            "name": "*ST立航",
-            "reason": "申请撤销退市风险警示+无人机+低空经济",
-            "change_pct": null
-          },
-          {
-            "code": "002897",
-            "name": "意华股份",
-            "reason": "800G高速连接器+华为链+CPO+液冷",
-            "change_pct": null
+            "change_pct": 10.012
           },
           {
             "code": "603459",
             "name": "红板科技",
             "reason": "PCB扩产+1.6T光模块+存储芯片",
-            "change_pct": null
+            "change_pct": 9.999
           },
           {
             "code": "000826",
             "name": "*ST启环",
             "reason": "预重整+数字环卫+锂电池",
-            "change_pct": null
+            "change_pct": 5.116
+          },
+          {
+            "code": "603663",
+            "name": "三祥新材",
+            "reason": "半导体产业链+核级锆+锆铪分离",
+            "change_pct": 10
+          },
+          {
+            "code": "000595",
+            "name": "*ST宝实",
+            "reason": "撤销退市风险警示申请+风光储+宁夏国资",
+            "change_pct": 5.033
           }
         ]
       }
     },
     "eastmoney_margin_trading": {
       "status": "ok",
-      "elapsed_ms": 391.2,
+      "elapsed_ms": 909.4,
       "data": {
         "provider_message": "ok",
         "count": 5,
@@ -6678,6 +6678,53 @@
           "RZMRE"
         ],
         "sample": [
+          {
+            "DATE": "2026-05-22 00:00:00",
+            "MARKET": "融资融券_沪证",
+            "SCODE": "600519",
+            "SECNAME": "贵州茅台",
+            "RZYE": 19590217189,
+            "RQYL": 131118,
+            "RZRQYE": 19759385632.6,
+            "RQYE": 169168443.6,
+            "RQMCL": 3300,
+            "RZRQYECZ": 19421048745.4,
+            "RZMRE": 673518405,
+            "SZ": 1615679031393,
+            "RZYEZB": 1.21250674,
+            "RZMRE3D": 1924993277,
+            "RZMRE5D": 2980492630,
+            "RZMRE10D": 6447297892,
+            "RZCHE": 619946727,
+            "RZCHE3D": 1726288107,
+            "RZCHE5D": 2628558242,
+            "RZCHE10D": 5320129124,
+            "RZJME": 53571678,
+            "RZJME3D": 198705170,
+            "RZJME5D": 351934388,
+            "RZJME10D": 1127168768,
+            "RQMCL3D": 21100,
+            "RQMCL5D": 67600,
+            "RQMCL10D": 122771,
+            "RQCHL": 2300,
+            "RQCHL3D": 10120,
+            "RQCHL5D": 24020,
+            "RQCHL10D": 94855,
+            "RQJMG": 1000,
+            "RQJMG3D": 10980,
+            "RQJMG5D": 43580,
+            "RQJMG10D": 27916,
+            "SPJ": 1290.2,
+            "ZDF": -1.5866,
+            "RCHANGE3DCP": -2.5749,
+            "RCHANGE5DCP": -3.2072,
+            "RCHANGE10DCP": -6.0299,
+            "KCB": 0,
+            "TRADE_MARKET_CODE": "069001001001",
+            "TRADE_MARKET": "上交所主板",
+            "FIN_BALANCE_GR": 0.274211245593,
+            "SECUCODE": "600519.SH"
+          },
           {
             "DATE": "2026-05-21 00:00:00",
             "MARKET": "融资融券_沪证",
@@ -6724,53 +6771,6 @@
             "TRADE_MARKET": "上交所主板",
             "FIN_BALANCE_GR": 0.246132663326,
             "SECUCODE": "600519.SH"
-          },
-          {
-            "DATE": "2026-05-20 00:00:00",
-            "MARKET": "融资融券_沪证",
-            "SCODE": "600519",
-            "SECNAME": "贵州茅台",
-            "RZYE": 19488677509,
-            "RQYL": 131738,
-            "RZRQYE": 19661912979,
-            "RQYE": 173235470,
-            "RQMCL": 12800,
-            "RZRQYECZ": 19315442039,
-            "RZMRE": 692009398,
-            "SZ": 1646735332725,
-            "RZYEZB": 1.18347357,
-            "RZMRE3D": 1747508751,
-            "RZMRE5D": 3164385247,
-            "RZMRE10D": 5984254933,
-            "RZCHE": 594843907,
-            "RZCHE3D": 1497114042,
-            "RZCHE5D": 2737786820,
-            "RZCHE10D": 4822989333,
-            "RZJME": 97165491,
-            "RZJME3D": 250394709,
-            "RZJME5D": 426598427,
-            "RZJME10D": 1161265600,
-            "RQMCL3D": 59300,
-            "RQMCL5D": 86671,
-            "RQMCL10D": 118651,
-            "RQCHL": 1200,
-            "RQCHL3D": 15100,
-            "RQCHL5D": 52200,
-            "RQCHL10D": 97585,
-            "RQJMG": 11600,
-            "RQJMG3D": 44200,
-            "RQJMG5D": 34471,
-            "RQJMG10D": 21066,
-            "SPJ": 1315,
-            "ZDF": -0.7023,
-            "RCHANGE3DCP": -1.3466,
-            "RCHANGE5DCP": -2.1643,
-            "RCHANGE10DCP": -4.3636,
-            "KCB": 0,
-            "TRADE_MARKET_CODE": "069001001001",
-            "TRADE_MARKET": "上交所主板",
-            "FIN_BALANCE_GR": 0.50107227278,
-            "SECUCODE": "600519.SH"
           }
         ],
         "note": "Empty result can mean reportName/filter mismatch, no recent data, or provider change."
@@ -6778,7 +6778,7 @@
     },
     "eastmoney_holder_num": {
       "status": "ok",
-      "elapsed_ms": 403.2,
+      "elapsed_ms": 890.0,
       "data": {
         "provider_message": "ok",
         "count": 1,
@@ -6839,7 +6839,7 @@
     },
     "eastmoney_stock_news": {
       "status": "ok",
-      "elapsed_ms": 99.9,
+      "elapsed_ms": 94.1,
       "data": {
         "count": 0,
         "result_keys": [
@@ -6850,46 +6850,18 @@
       }
     },
     "mootdx_a_share": {
-      "status": "ok",
-      "elapsed_ms": 876.4,
-      "data": {
-        "daily_bars_shape": [
-          5,
-          13
-        ],
-        "daily_bars_columns": [
-          "open",
-          "close",
-          "high",
-          "low",
-          "vol",
-          "amount",
-          "year",
-          "month",
-          "day",
-          "hour",
-          "minute",
-          "datetime",
-          "volume"
-        ],
-        "latest_daily_bar": {
-          "open": 1310.95,
-          "close": 1290.2,
-          "high": 1311.91,
-          "low": 1290.12,
-          "vol": 49157.0,
-          "amount": 6372389376.0,
-          "year": 2026,
-          "month": 5,
-          "day": 22,
-          "hour": 15,
-          "minute": 0,
-          "datetime": "2026-05-22 15:00",
-          "volume": 49157.0
-        },
-        "finance_keys_sample": [],
-        "f10_length": 8606,
-        "f10_head": "☆公司概况☆ ◇600519 贵州茅台 更新日期：2026-05-21◇ 港澳资讯 灵通V9.0\r\n★本栏包括【1.基本资料】【2.发行上市】【3.上市定价预测】【4.关联企业】★\r\n\r\n【1.基本资料】\r\n┌────────┬────────────────────┬────────┬────────────────────┐\r\n｜公司名称        ｜贵州茅台酒股份有限公司        "
+      "status": "error",
+      "elapsed_ms": 0.6,
+      "error": {
+        "type": "ModuleNotFoundError",
+        "message": "No module named 'mootdx'",
+        "traceback_tail": [
+          "    (\"mootdx_a_share\", lambda: mootdx_probe(\"600519\")),",
+          "                               ^^^^^^^^^^^^^^^^^^^^^^",
+          "  File \"D:\\workspace\\agenteum\\agenteum-fin\\playground\\provider_probe.py\", line 529, in mootdx_probe",
+          "    from mootdx.quotes import Quotes",
+          "ModuleNotFoundError: No module named 'mootdx'"
+        ]
       }
     }
   }

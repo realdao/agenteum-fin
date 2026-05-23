@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import requests
+import httpx
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 OUT = Path(__file__).with_name("provider_probe_results.json")
@@ -45,7 +45,13 @@ def get_json(
     headers: dict[str, str] | None = None,
     timeout: float = 15,
 ) -> dict[str, Any]:
-    response = requests.get(url, params=params, headers=headers or {"User-Agent": UA}, timeout=timeout)
+    response = httpx.get(
+        url,
+        params=params,
+        headers=headers or {"User-Agent": UA},
+        timeout=timeout,
+        follow_redirects=True,
+    )
     response.raise_for_status()
     return response.json()
 
@@ -57,7 +63,13 @@ def post_json(
     headers: dict[str, str] | None = None,
     timeout: float = 15,
 ) -> dict[str, Any]:
-    response = requests.post(url, data=data, headers=headers or {"User-Agent": UA}, timeout=timeout)
+    response = httpx.post(
+        url,
+        data=data,
+        headers=headers or {"User-Agent": UA},
+        timeout=timeout,
+        follow_redirects=True,
+    )
     response.raise_for_status()
     return response.json()
 
@@ -299,7 +311,11 @@ def sina_financial_report(code: str, report_type: str) -> dict[str, Any]:
         report_dates = payload.get("report_date") or []
         report_list = payload.get("report_list") or {}
         rows = [
-            {"report_date": item.get("date_value"), "description": item.get("date_description"), **(report_list.get(item.get("date_value")) or {})}
+            {
+                "report_date": item.get("date_value"),
+                "description": item.get("date_description"),
+                **(report_list.get(item.get("date_value")) or {}),
+            }
             for item in report_dates[:3]
             if item.get("date_value") in report_list
         ]
@@ -387,7 +403,11 @@ def baidu_concept_blocks(code: str) -> dict[str, Any]:
         "block_count": len(result) if isinstance(result, list) else None,
         "raw_tag_count": len(tags),
         "raw_tags_sample": tags[:10],
-        "note": "ResultCode 10003 was observed in this environment for getrelatedblock; keep concept blocks behind a provider interface and verify again before enabling as default.",
+        "note": (
+            "ResultCode 10003 was observed in this environment for getrelatedblock; "
+            "keep concept blocks behind a provider interface and verify again before "
+            "enabling as default."
+        ),
     }
 
 
@@ -441,7 +461,10 @@ def eastmoney_datacenter(
         "count": len(rows),
         "sample_keys": sorted(rows[0].keys())[:30] if rows else [],
         "sample": rows[:2],
-        "note": "Empty result can mean reportName/filter mismatch, no recent data, or provider change.",
+        "note": (
+            "Empty result can mean reportName/filter mismatch, no recent data, "
+            "or provider change."
+        ),
     }
 
 
@@ -457,7 +480,14 @@ def eastmoney_stock_news(code: str) -> dict[str, Any]:
                 "client": "web",
                 "clientType": "web",
                 "clientVersion": "curr",
-                "param": {"cmsArticleWebOld": {"searchScope": "default", "sort": "default", "pageIndex": 1, "pageSize": 5}},
+                "param": {
+                    "cmsArticleWebOld": {
+                        "searchScope": "default",
+                        "sort": "default",
+                        "pageIndex": 1,
+                        "pageSize": 5,
+                    },
+                },
             },
             ensure_ascii=False,
         ),
@@ -488,7 +518,10 @@ def eastmoney_stock_news(code: str) -> dict[str, Any]:
             }
             for item in articles[:3]
         ],
-        "note": "This endpoint returned passportWeb only for stock keywords in this environment; stock news needs further discovery or an alternate provider.",
+        "note": (
+            "This endpoint returned passportWeb only for stock keywords in this environment; "
+            "stock news needs further discovery or an alternate provider."
+        ),
     }
 
 
@@ -500,10 +533,15 @@ def mootdx_probe(code: str) -> dict[str, Any]:
     bars = client.bars(symbol=normalized, category=4, offset=5)
     finance = client.finance(symbol=normalized)
     f10 = client.F10(symbol=normalized, name="公司概况")
+    latest_daily_bar = (
+        bars.tail(1).to_dict("records")[0]
+        if hasattr(bars, "tail") and not bars.empty
+        else None
+    )
     return {
         "daily_bars_shape": list(getattr(bars, "shape", ())),
         "daily_bars_columns": list(getattr(bars, "columns", [])),
-        "latest_daily_bar": bars.tail(1).to_dict("records")[0] if hasattr(bars, "tail") and not bars.empty else None,
+        "latest_daily_bar": latest_daily_bar,
         "finance_keys_sample": list(finance.keys())[:20] if isinstance(finance, dict) else [],
         "f10_length": len(f10 or ""),
         "f10_head": (f10 or "")[:200],
@@ -550,8 +588,21 @@ def main() -> None:
         ("cninfo_announcements", lambda: cninfo_announcements("600519")),
         ("baidu_concept_blocks", lambda: baidu_concept_blocks("600519")),
         ("ths_hot_reason", ths_hot_reason),
-        ("eastmoney_margin_trading", lambda: eastmoney_datacenter("RPTA_WEB_RZRQ_GGMX", filter_str='(SCODE="600519")', sort_columns="DATE")),
-        ("eastmoney_holder_num", lambda: eastmoney_datacenter("RPT_HOLDERNUMLATEST", filter_str='(SECURITY_CODE="600519")')),
+        (
+            "eastmoney_margin_trading",
+            lambda: eastmoney_datacenter(
+                "RPTA_WEB_RZRQ_GGMX",
+                filter_str='(SCODE="600519")',
+                sort_columns="DATE",
+            ),
+        ),
+        (
+            "eastmoney_holder_num",
+            lambda: eastmoney_datacenter(
+                "RPT_HOLDERNUMLATEST",
+                filter_str='(SECURITY_CODE="600519")',
+            ),
+        ),
         ("eastmoney_stock_news", lambda: eastmoney_stock_news("600519")),
         ("mootdx_a_share", lambda: mootdx_probe("600519")),
     ]

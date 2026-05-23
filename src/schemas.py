@@ -3,8 +3,9 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
+from src.utils.dates import parse_optional_date
 from src.utils.symbols import NormalizedSymbol
 
 
@@ -50,7 +51,13 @@ class KlineRequest(BaseModel):
     start_date: str | None = None
     end_date: str | None = None
     adjust: Literal["none", "qfq", "hfq"] = "none"
-    limit: int | None = None
+    limit: int | None = Field(default=None, gt=0)
+
+    @field_validator("start_date", "end_date")
+    @classmethod
+    def validate_iso_date(cls, value: str | None) -> str | None:
+        parsed = parse_optional_date(value)
+        return parsed.isoformat() if parsed is not None else None
 
 
 class KlineBar(BaseModel):
@@ -71,7 +78,7 @@ class KlineData(BaseModel):
 
 
 class KlineResponse(BaseToolResponse):
-    data: KlineData | dict[str, Any]
+    data: KlineData
 
 
 class StockProfileData(BaseModel):
@@ -108,7 +115,7 @@ class StockProfileResponse(BaseToolResponse):
 class FinancialStatementsRequest(BaseModel):
     symbol: str
     statement_type: Literal["balance_sheet", "income", "cash_flow", "all"] = "all"
-    periods: int = 8
+    periods: int = Field(default=8, gt=0)
 
 
 class FinancialLineItem(BaseModel):
@@ -153,7 +160,12 @@ class F10Request(BaseModel):
         "capital_structure",
         "financial_analysis",
     ] = "company_profile"
-    max_chars: int = 4000
+    max_chars: int = Field(default=4000, gt=0)
+
+
+class PageSizeRequest(BaseModel):
+    symbol: str
+    page_size: int = Field(default=20, gt=0)
 
 
 class F10Data(BaseModel):

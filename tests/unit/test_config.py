@@ -15,6 +15,11 @@ def test_settings_defaults_match_spec():
     assert settings.fin_retry_attempts == 1
     assert settings.fin_a_kline_provider == "mootdx"
     assert settings.fin_hk_kline_provider == "none"
+    assert settings.fin_profile_provider == "tencent"
+    assert settings.fin_financial_statements_provider == "sina"
+    assert settings.fin_f10_provider == "mootdx"
+    assert settings.fin_announcements_provider == "cninfo"
+    assert settings.fin_research_reports_provider == "eastmoney"
 
 
 def test_remote_bind_requires_explicit_allow_remote():

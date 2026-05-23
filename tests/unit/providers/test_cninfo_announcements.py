@@ -10,7 +10,9 @@ from src.utils.symbols import normalize_symbol
 
 @pytest.mark.asyncio
 async def test_cninfo_maps_announcement_fields():
-    fixture = json.loads(Path("tests/fixtures/cninfo_announcements.json").read_text(encoding="utf-8"))
+    fixture = json.loads(
+        Path("tests/fixtures/cninfo_announcements.json").read_text(encoding="utf-8")
+    )
 
     async def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json=fixture)
