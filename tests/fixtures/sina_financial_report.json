@@ -1,0 +1,21 @@
+{
+  "result": {
+    "data": {
+      "report_count": 102,
+      "report_date": [
+        {"date_value": "20260331", "date_description": "2026一季报"}
+      ],
+      "report_list": {
+        "20260331": {
+          "f001": {
+            "item_title": "营业总收入",
+            "value": "17400000000",
+            "display_type": "0",
+            "group_num": "1",
+            "yoy": "12.3"
+          }
+        }
+      }
+    }
+  }
+}
