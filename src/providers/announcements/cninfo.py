@@ -5,12 +5,18 @@ from typing import Any
 
 import httpx
 
+from src.errors import ProviderError
 from src.schemas import AnnouncementItem
-from src.utils.http import post_form_json
+from src.utils.http import get_json, post_form_json
 from src.utils.symbols import NormalizedSymbol
 
 CNINFO_BASE_URL = "https://www.cninfo.com.cn/new/hisAnnouncement/query"
 CNINFO_STATIC_BASE = "https://static.cninfo.com.cn/"
+CNINFO_STOCK_LIST_URL = "https://www.cninfo.com.cn/new/data/szse_stock.json"
+CNINFO_HEADERS = {
+    "User-Agent": "Mozilla/5.0",
+    "Referer": "https://www.cninfo.com.cn/new/disclosure",
+}
 
 
 class CninfoAnnouncementProvider:
@@ -18,6 +24,7 @@ class CninfoAnnouncementProvider:
 
     def __init__(self, *, client: httpx.AsyncClient) -> None:
         self.client = client
+        self._org_id_by_code: dict[str, str] | None = None
 
     async def get_announcements(
         self,
@@ -29,7 +36,7 @@ class CninfoAnnouncementProvider:
             CNINFO_BASE_URL,
             provider=self.name,
             data={
-                "stock": f"{symbol.symbol},{_org_id(symbol)}",
+                "stock": f"{symbol.symbol},{await self._org_id(symbol)}",
                 "tabName": "fulltext",
                 "pageSize": str(page_size),
                 "pageNum": "1",
@@ -44,16 +51,41 @@ class CninfoAnnouncementProvider:
                 "isHLtitle": "true",
             },
             headers={
-                "User-Agent": "Mozilla/5.0",
+                **CNINFO_HEADERS,
                 "Content-Type": "application/x-www-form-urlencoded",
-                "Referer": "https://www.cninfo.com.cn/new/disclosure",
                 "Origin": "https://www.cninfo.com.cn",
             },
         )
         return [_map_announcement(item) for item in payload.get("announcements") or []]
 
+    async def _org_id(self, symbol: NormalizedSymbol) -> str:
+        org_id = await self._lookup_org_id(symbol.symbol)
+        return org_id or _formula_org_id(symbol)
 
-def _org_id(symbol: NormalizedSymbol) -> str:
+    async def _lookup_org_id(self, code: str) -> str | None:
+        if self._org_id_by_code is None:
+            try:
+                payload = await get_json(
+                    self.client,
+                    CNINFO_STOCK_LIST_URL,
+                    provider=self.name,
+                    headers=CNINFO_HEADERS,
+                )
+            except ProviderError:
+                return None
+            stock_list = payload.get("stockList")
+            if not isinstance(stock_list, list):
+                self._org_id_by_code = {}
+                return None
+            self._org_id_by_code = {
+                str(item["code"]): str(item["orgId"])
+                for item in stock_list
+                if isinstance(item, dict) and item.get("code") and item.get("orgId")
+            }
+        return self._org_id_by_code.get(code)
+
+
+def _formula_org_id(symbol: NormalizedSymbol) -> str:
     if symbol.exchange == "sh":
         return f"gssh0{symbol.symbol}"
     if symbol.exchange == "bj":
