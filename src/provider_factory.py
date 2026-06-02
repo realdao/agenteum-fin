@@ -18,6 +18,7 @@ from src.services.research_report_service import ResearchReportService
 from src.services.retry import RetryPolicy
 from src.services.stock_f10_service import StockF10Service
 from src.services.stock_kline_service import StockKlineService
+from src.services.stock_news_service import StockNewsService
 from src.services.stock_profile_service import StockProfileService
 
 
@@ -30,42 +31,52 @@ class ServiceBundle:
     f10_service: StockF10Service
     announcement_service: AnnouncementService
     research_report_service: ResearchReportService
+    news_service: StockNewsService
 
 
 def build_services(settings: Settings) -> ServiceBundle:
     http_client = httpx.AsyncClient(timeout=settings.fin_request_timeout)
     retry_policy = RetryPolicy.from_settings(settings)
 
+    kline_service = StockKlineService(
+        a_share_provider=_a_kline_provider(settings.fin_a_kline_provider),
+        hk_provider=_hk_kline_provider(settings.fin_hk_kline_provider),
+        retry_policy=retry_policy,
+    )
+    profile_service = StockProfileService(
+        providers=[_profile_provider(settings.fin_profile_provider, http_client)],
+        retry_policy=retry_policy,
+    )
+    financial_service = FinancialStatementService(
+        provider=_financial_provider(
+            settings.fin_financial_statements_provider,
+            http_client,
+        ),
+        retry_policy=retry_policy,
+    )
+    f10_service = StockF10Service(
+        provider=_f10_provider(settings.fin_f10_provider),
+        retry_policy=retry_policy,
+    )
+    announcement_service = AnnouncementService(
+        provider=_announcement_provider(settings.fin_announcements_provider, http_client),
+        retry_policy=retry_policy,
+    )
+    research_report_service = ResearchReportService(
+        provider=_research_provider(settings.fin_research_reports_provider, http_client),
+        retry_policy=retry_policy,
+    )
+    news_service = StockNewsService(profile_service=profile_service)
+
     return ServiceBundle(
         http_client=http_client,
-        kline_service=StockKlineService(
-            a_share_provider=_a_kline_provider(settings.fin_a_kline_provider),
-            hk_provider=_hk_kline_provider(settings.fin_hk_kline_provider),
-            retry_policy=retry_policy,
-        ),
-        profile_service=StockProfileService(
-            providers=[_profile_provider(settings.fin_profile_provider, http_client)],
-            retry_policy=retry_policy,
-        ),
-        financial_service=FinancialStatementService(
-            provider=_financial_provider(
-                settings.fin_financial_statements_provider,
-                http_client,
-            ),
-            retry_policy=retry_policy,
-        ),
-        f10_service=StockF10Service(
-            provider=_f10_provider(settings.fin_f10_provider),
-            retry_policy=retry_policy,
-        ),
-        announcement_service=AnnouncementService(
-            provider=_announcement_provider(settings.fin_announcements_provider, http_client),
-            retry_policy=retry_policy,
-        ),
-        research_report_service=ResearchReportService(
-            provider=_research_provider(settings.fin_research_reports_provider, http_client),
-            retry_policy=retry_policy,
-        ),
+        kline_service=kline_service,
+        profile_service=profile_service,
+        financial_service=financial_service,
+        f10_service=f10_service,
+        announcement_service=announcement_service,
+        research_report_service=research_report_service,
+        news_service=news_service,
     )
 
 

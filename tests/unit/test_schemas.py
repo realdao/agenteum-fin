@@ -12,6 +12,9 @@ from src.schemas import (
     NormalizedSymbol,
     PageSizeRequest,
     ProviderStatus,
+    StockNewsData,
+    StockNewsRequest,
+    StockNewsResponse,
     StockProfileData,
     ToolErrorResponse,
 )
@@ -83,6 +86,39 @@ def test_profile_data_allows_null_best_effort_fields():
     )
 
     assert data.industry is None
+
+
+def test_stock_news_request_defaults_to_week_range():
+    request = StockNewsRequest(symbol="600519")
+
+    assert request.symbol == "600519"
+    assert request.time_range == "w"
+
+
+def test_stock_news_request_rejects_unknown_time_range():
+    with pytest.raises(ValidationError):
+        StockNewsRequest(symbol="600519", time_range="year")
+
+
+def test_stock_news_response_allows_partial_null_sources():
+    response = StockNewsResponse(
+        data=StockNewsData(
+            google=[{"title": "贵州茅台新闻"}],
+            twitter=None,
+            xueqiu={"comments": []},
+        )
+    )
+
+    dumped = response.model_dump()
+
+    assert dumped == {
+        "status": "ok",
+        "data": {
+            "google": [{"title": "贵州茅台新闻"}],
+            "twitter": None,
+            "xueqiu": {"comments": []},
+        },
+    }
 
 
 def test_error_response_shape():

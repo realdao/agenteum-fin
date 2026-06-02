@@ -215,3 +215,19 @@ class ResearchReportsData(BaseModel):
 
 class ResearchReportsResponse(BaseToolResponse):
     data: ResearchReportsData
+
+
+class StockNewsRequest(BaseModel):
+    symbol: str
+    time_range: Literal["w", "d", "m"] = "w"
+
+
+class StockNewsData(BaseModel):
+    google: Any | None = None
+    twitter: Any | None = None
+    xueqiu: Any | None = None
+
+
+class StockNewsResponse(BaseModel):
+    status: Literal["ok"] = "ok"
+    data: StockNewsData

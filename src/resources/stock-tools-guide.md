@@ -58,6 +58,18 @@ Parameters: `symbol` and positive `page_size`.
 
 Coverage: A-shares use Eastmoney reportapi by default. Hong Kong symbols return `unsupported_market` in v1.
 
+## stock_news
+
+Purpose: recent stock news and social discussion from Google News, Twitter/X, and Xueqiu through the external `opencli` command.
+
+Parameters: `symbol` and `time_range` (`w`, `d`, `m`). The default `time_range` is `w`.
+
+Coverage: A-share and Hong Kong symbols use existing symbol normalization and best-effort company-name enrichment from `stock_profile`. US-style alphabetic tickers such as `AAPL` are accepted directly and skip company-name enrichment.
+
+Search details: Google News searches use display symbol plus company name when available. Twitter/X searches use the company name when available, otherwise the display symbol or ticker, and append `, since:YYYY-MM-DD`. Xueqiu Hong Kong comments use the bare five-digit symbol such as `00700`.
+
+Limitations: this tool returns each `opencli` JSON payload as-is. It does not deduplicate, rank, translate, or summarize results. If one source fails, that source is `null`; if all three sources fail, the tool returns `provider_unavailable` for provider `opencli`.
+
 ## Fallbacks And Errors
 
 Every successful response includes `provider`, `provider_status`, `fetched_at`, and `fallbacks`. Same-provider retry can be enabled by server configuration for `timeout`, `network`, and `provider_5xx`. Provider fallback is conservative and only applies to recoverable provider errors when multiple providers are configured. Future-version candidates live in `docs/future-requirements.md`.

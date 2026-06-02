@@ -14,6 +14,7 @@ from src.schemas import (
     FinancialStatementsRequest,
     KlineRequest,
     PageSizeRequest,
+    StockNewsRequest,
     ToolErrorResponse,
 )
 
@@ -26,6 +27,7 @@ def create_mcp_server(
     f10_service: Any | None = None,
     announcement_service: Any | None = None,
     research_report_service: Any | None = None,
+    news_service: Any | None = None,
 ) -> FastMCP:
     mcp = FastMCP(
         "Agenteum Fin",
@@ -136,6 +138,21 @@ def create_mcp_server(
                 page_size=request.page_size,
             )
             return response.model_dump(by_alias=True)
+        except ProviderError as exc:
+            return _provider_error_response(exc).model_dump(by_alias=True)
+        except ValidationError as exc:
+            return _validation_error_response(exc).model_dump(by_alias=True)
+
+    @mcp.tool()
+    async def stock_news(symbol: str, time_range: str = "w") -> dict:
+        """Return recent stock news and social discussion from opencli sources."""
+        try:
+            request = StockNewsRequest(symbol=symbol, time_range=time_range)
+            response = await news_service.get_news(
+                request.symbol,
+                time_range=request.time_range,
+            )
+            return response.model_dump()
         except ProviderError as exc:
             return _provider_error_response(exc).model_dump(by_alias=True)
         except ValidationError as exc:

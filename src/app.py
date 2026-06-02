@@ -25,6 +25,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         f10_service=services.f10_service,
         announcement_service=services.announcement_service,
         research_report_service=services.research_report_service,
+        news_service=services.news_service,
     )
     mcp_app = mount_mcp_streamable_http(mcp)
 
