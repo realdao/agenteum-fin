@@ -36,6 +36,18 @@ Both envelopes are an independent contract (dynamic fields such as `source`, `qu
 
 Routing guidance and per-domain examples live in the MCP resource `agenteum-fin://tools/iwencai-query-guide`. Disable the layer with `AGENTEUM_FIN_IWENCAI_PROVIDER=none`.
 
+## Linux Service Deployment
+
+`deploy/linux/` provides a systemd unit and install scripts for Ubuntu hosts:
+
+```bash
+uv sync                                  # must exist before installing
+sudo deploy/linux/install-service.sh     # renders, enables, and starts the unit
+sudo deploy/linux/uninstall-service.sh   # stops and removes the unit
+```
+
+The service runs `agenteum-fin` from the project venv as the invoking user (or a system `agenteum` user when installed as root), restarts on failure, and appends logs to `logs/agenteum-fin.{out,err}.log`. Configuration is read from the project `.env`; edit it and run `systemctl restart agenteum-fin`. Remote access additionally requires `AGENTEUM_HOST=0.0.0.0` and `AGENTEUM_ALLOW_REMOTE=true` (see Remote Access).
+
 ## Provider Switching
 
 Provider selection is static for a running process. Change `.env`, then restart the server.
