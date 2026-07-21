@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import Field, ValidationError
 
 from src.errors import ErrorType, ProviderError, is_recoverable
@@ -31,12 +32,25 @@ def create_mcp_server(
     research_report_service: Any | None = None,
     news_service: Any | None = None,
     iwencai_service: Any | None = None,
+    allow_remote: bool = False,
 ) -> FastMCP:
+    # FastMCP auto-enables localhost-only DNS-rebinding protection when host is
+    # 127.0.0.1/localhost. That blocks remote clients reaching the service via a
+    # domain name or public IP (the SDK rejects their Host header with 421).
+    # When the operator explicitly opts into remote access via
+    # AGENTEUM_ALLOW_REMOTE=true, disable that protection so external Host
+    # headers are accepted. Authentication should be handled separately.
+    transport_security = (
+        TransportSecuritySettings(enable_dns_rebinding_protection=False)
+        if allow_remote
+        else None
+    )
     mcp = FastMCP(
         "Agenteum Fin",
         stateless_http=True,
         json_response=True,
         streamable_http_path="/",
+        transport_security=transport_security,
     )
 
     @mcp.tool()

@@ -27,6 +27,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         research_report_service=services.research_report_service,
         news_service=services.news_service,
         iwencai_service=services.iwencai_service,
+        allow_remote=settings.allow_remote,
     )
     mcp_app = mount_mcp_streamable_http(mcp)
 

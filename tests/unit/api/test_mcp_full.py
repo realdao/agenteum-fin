@@ -515,3 +515,21 @@ async def test_mcp_stock_tool_error_responses_do_not_carry_source():
 
     assert result["status"] == "error"
     assert "source" not in result
+
+
+def test_create_mcp_server_disables_dns_rebinding_protection_when_remote():
+    mcp = create_mcp_server(allow_remote=True)
+
+    security = mcp.settings.transport_security
+    assert security is not None
+    assert security.enable_dns_rebinding_protection is False
+
+
+def test_create_mcp_server_keeps_default_localhost_protection_when_local():
+    mcp = create_mcp_server(allow_remote=False)
+
+    # transport_security is None so FastMCP auto-enables localhost-only protection
+    security = mcp.settings.transport_security
+    assert security is not None
+    assert "127.0.0.1:*" in security.allowed_hosts
+    assert "localhost:*" in security.allowed_hosts

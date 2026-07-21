@@ -12,6 +12,10 @@ uv run agenteum-fin
 
 The server listens on `http://127.0.0.1:8766` by default and exposes MCP at `/mcp/full`.
 
+## Remote Access
+
+Binding a remote host (for example `AGENTEUM_HOST=0.0.0.0`) requires `AGENTEUM_ALLOW_REMOTE=true`. Setting it also disables the MCP SDK's localhost-only DNS-rebinding protection, so remote clients can reach the service via a hostname or public IP (their `Host` header is accepted). v1 has no authentication; do not expose a remote bind address to an untrusted network.
+
 ## Test
 
 ```powershell
