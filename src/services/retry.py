@@ -34,10 +34,23 @@ async def run_with_retries(
     *,
     policy: RetryPolicy,
 ) -> T:
+    return await run_with_retries_indexed(lambda attempt: operation(), policy=policy)
+
+
+async def run_with_retries_indexed(
+    operation: Callable[[int], Awaitable[T]],
+    *,
+    policy: RetryPolicy,
+) -> T:
+    """Like run_with_retries, but the operation receives the 1-based attempt number.
+
+    Lets callers vary behavior per attempt (e.g. mark retries on the wire)
+    while keeping the same retryable-error and backoff semantics.
+    """
     attempts = max(1, policy.attempts)
     for attempt in range(1, attempts + 1):
         try:
-            return await operation()
+            return await operation(attempt)
         except ProviderError as exc:
             if exc.error_type not in RETRYABLE_ERROR_TYPES or attempt >= attempts:
                 raise

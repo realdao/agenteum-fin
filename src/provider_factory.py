@@ -9,11 +9,13 @@ from src.errors import ErrorType, ProviderError
 from src.providers.announcements.cninfo import CninfoAnnouncementProvider
 from src.providers.f10.mootdx_f10 import MootdxF10Provider
 from src.providers.financials.sina import SinaFinancialStatementsProvider
+from src.providers.iwencai.client import IwencaiClient
 from src.providers.market_data.mootdx_kline import MootdxKlineProvider
 from src.providers.profile.tencent import TencentProfileProvider
 from src.providers.research.eastmoney import EastmoneyResearchReportProvider
 from src.services.announcement_service import AnnouncementService
 from src.services.financial_statement_service import FinancialStatementService
+from src.services.iwencai_service import IwencaiService
 from src.services.research_report_service import ResearchReportService
 from src.services.retry import RetryPolicy
 from src.services.stock_f10_service import StockF10Service
@@ -32,6 +34,7 @@ class ServiceBundle:
     announcement_service: AnnouncementService
     research_report_service: ResearchReportService
     news_service: StockNewsService
+    iwencai_service: IwencaiService | None
 
 
 def build_services(settings: Settings) -> ServiceBundle:
@@ -67,6 +70,7 @@ def build_services(settings: Settings) -> ServiceBundle:
         retry_policy=retry_policy,
     )
     news_service = StockNewsService(profile_service=profile_service)
+    iwencai_service = _iwencai_service(settings, http_client, retry_policy)
 
     return ServiceBundle(
         http_client=http_client,
@@ -77,6 +81,7 @@ def build_services(settings: Settings) -> ServiceBundle:
         announcement_service=announcement_service,
         research_report_service=research_report_service,
         news_service=news_service,
+        iwencai_service=iwencai_service,
     )
 
 
@@ -128,6 +133,22 @@ def _research_provider(provider_name: str, client: httpx.AsyncClient):
     if provider_name == "none":
         return None
     raise _unknown_provider("research_reports", provider_name)
+
+
+def _iwencai_service(
+    settings: Settings,
+    client: httpx.AsyncClient,
+    retry_policy: RetryPolicy,
+) -> IwencaiService | None:
+    provider_name = settings.fin_iwencai_provider
+    if provider_name == "none":
+        return None
+    if provider_name != "iwencai":
+        raise _unknown_provider("iwencai", provider_name)
+    return IwencaiService(
+        client=IwencaiClient(client=client, api_key=settings.resolved_iwencai_api_key),
+        retry_policy=retry_policy,
+    )
 
 
 def _unknown_provider(domain: str, provider_name: str) -> ProviderError:

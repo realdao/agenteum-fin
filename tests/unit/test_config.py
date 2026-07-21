@@ -20,6 +20,20 @@ def test_settings_defaults_match_spec():
     assert settings.fin_f10_provider == "mootdx"
     assert settings.fin_announcements_provider == "cninfo"
     assert settings.fin_research_reports_provider == "eastmoney"
+    assert settings.fin_iwencai_provider == "iwencai"
+
+
+def test_iwencai_api_key_falls_back_to_skill_ecosystem_env(monkeypatch):
+    # 显式传 None，隔离 .env / 环境变量中已配置密钥的影响。
+    monkeypatch.delenv("IWENCAI_API_KEY", raising=False)
+    assert Settings(AGENTEUM_FIN_IWENCAI_API_KEY=None).resolved_iwencai_api_key is None
+
+    monkeypatch.setenv("IWENCAI_API_KEY", "eco-key")
+    assert Settings(AGENTEUM_FIN_IWENCAI_API_KEY=None).resolved_iwencai_api_key == "eco-key"
+    assert (
+        Settings(AGENTEUM_FIN_IWENCAI_API_KEY="explicit-key").resolved_iwencai_api_key
+        == "explicit-key"
+    )
 
 
 def test_remote_bind_requires_explicit_allow_remote():

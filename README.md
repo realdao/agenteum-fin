@@ -19,7 +19,18 @@ uv run pytest -q
 uv run ruff check .
 ```
 
-Default tests use fixtures and fake providers. Live provider probes live in `playground/provider_probe.py`.
+Default tests use fixtures and fake providers. Live provider probes live in `playground/provider_probe.py` and `playground/iwencai_probe.py`.
+
+## Iwencai Flexible Query Layer
+
+Two tools proxy the THS Iwencai (同花顺问财) OpenAPI as a flexible query layer behind an `IWENCAI_API_KEY`:
+
+- `iwencai_query(query, domain, page, limit, is_retry)`: natural-language structured data across 11 domains (finance, market, macro, industry, business, management, insresearch, astock, hkstock, sector, index).
+- `iwencai_search(query, channel, size, is_retry)`: keyword search over `news`, `report`, and `announcement` channels.
+
+Both envelopes are an independent contract (dynamic fields such as `source`, `query`, `datas`/`data`) and intentionally do not follow the `BaseToolResponse` model of the stock_* tools. Set `is_retry=true` when retrying with relaxed conditions so the gateway marks the request as a retry.
+
+Routing guidance and per-domain examples live in the MCP resource `agenteum-fin://tools/iwencai-query-guide`. Disable the layer with `AGENTEUM_FIN_IWENCAI_PROVIDER=none`.
 
 ## Provider Switching
 

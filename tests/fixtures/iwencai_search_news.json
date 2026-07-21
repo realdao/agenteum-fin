@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "title": "人工智能产业新政策发布",
+      "summary": "多部门联合发布人工智能产业支持政策，涉及算力基建与应用落地。",
+      "url": "https://example.com/news/1",
+      "publish_date": "2026-01-10 09:30:00"
+    },
+    {
+      "title": "芯片行业景气度回升",
+      "summary": "多家机构上调芯片行业一季度出货预期。",
+      "url": "https://example.com/news/2",
+      "publish_date": "2026-01-09 18:05:00"
+    }
+  ]
+}

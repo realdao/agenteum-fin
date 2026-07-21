@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from functools import cache
 from ipaddress import ip_address
 
@@ -41,6 +42,13 @@ class Settings(BaseSettings):
         default="eastmoney",
         alias="AGENTEUM_FIN_RESEARCH_REPORTS_PROVIDER",
     )
+    fin_iwencai_provider: str = Field(default="iwencai", alias="AGENTEUM_FIN_IWENCAI_PROVIDER")
+    fin_iwencai_api_key: str | None = Field(default=None, alias="AGENTEUM_FIN_IWENCAI_API_KEY")
+
+    @property
+    def resolved_iwencai_api_key(self) -> str | None:
+        """Iwencai API key: explicit setting first, then the IWENCAI_API_KEY env convention."""
+        return self.fin_iwencai_api_key or os.environ.get("IWENCAI_API_KEY") or None
 
     def validate_network_binding(self, logger: logging.Logger) -> None:
         if not is_remote_bind_host(self.host):

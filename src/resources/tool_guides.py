@@ -4,6 +4,7 @@ from importlib.resources import files
 
 RESOURCE_URIS = {
     "agenteum-fin://tools/stock-tools-guide": "stock-tools-guide.md",
+    "agenteum-fin://tools/iwencai-query-guide": "iwencai-query-guide.md",
     "agenteum-fin://providers/capabilities": "providers-capabilities.md",
 }
 

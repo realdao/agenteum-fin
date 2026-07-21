@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_serializer
 
 from src.utils.dates import parse_optional_date
 from src.utils.symbols import NormalizedSymbol
@@ -35,6 +35,16 @@ class ToolErrorResponse(BaseModel):
     status: Literal["error"] = "error"
     error: ErrorDetail
     fallbacks: list[FallbackRecord] = Field(default_factory=list)
+    # 可选来源标注；iwencai 工具的所有错误响应注入 "同花顺问财"。
+    # 为 None 时序列化省略该键，stock_* 工具错误响应保持原样不带 source。
+    source: str | None = None
+
+    @model_serializer(mode="wrap")
+    def _omit_none_source(self, handler):
+        data = handler(self)
+        if data.get("source") is None:
+            data.pop("source", None)
+        return data
 
 
 class BaseToolResponse(BaseModel):
@@ -215,6 +225,36 @@ class ResearchReportsData(BaseModel):
 
 class ResearchReportsResponse(BaseToolResponse):
     data: ResearchReportsData
+
+
+IwencaiDomain = Literal[
+    "finance",
+    "market",
+    "macro",
+    "industry",
+    "business",
+    "management",
+    "insresearch",
+    "astock",
+    "hkstock",
+    "sector",
+    "index",
+]
+
+IwencaiChannel = Literal["news", "report", "announcement"]
+
+
+class IwencaiQueryRequest(BaseModel):
+    query: str = Field(min_length=1)
+    domain: IwencaiDomain
+    page: int = Field(default=1, gt=0)
+    limit: int = Field(default=10, gt=0)
+
+
+class IwencaiSearchRequest(BaseModel):
+    query: str = Field(min_length=1)
+    channel: IwencaiChannel
+    size: int = Field(default=10, gt=0)
 
 
 class StockNewsRequest(BaseModel):

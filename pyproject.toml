@@ -43,6 +43,8 @@ asyncio_mode = "auto"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Third-party reference skill scripts vendored for contract lookup only.
+exclude = ["docs/references"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

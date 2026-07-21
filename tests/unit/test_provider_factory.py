@@ -40,3 +40,24 @@ def test_build_services_wires_news_service_to_profile_service():
     )
 
     assert services.news_service.profile_service is services.profile_service
+
+
+def test_build_services_disables_iwencai_with_none():
+    services = build_services(Settings(AGENTEUM_FIN_IWENCAI_PROVIDER="none"))
+
+    assert services.iwencai_service is None
+
+
+def test_build_services_rejects_unknown_iwencai_provider():
+    with pytest.raises(ProviderError) as raised:
+        build_services(Settings(AGENTEUM_FIN_IWENCAI_PROVIDER="unknown"))
+
+    assert raised.value.error_type == ErrorType.CONFIG_ERROR
+    assert raised.value.provider == "iwencai"
+
+
+def test_build_services_builds_iwencai_service_by_default():
+    services = build_services(Settings())
+
+    assert services.iwencai_service is not None
+    assert services.iwencai_service.client.name == "iwencai"
