@@ -270,19 +270,3 @@ class IwencaiSearchRequest(BaseModel):
     query: str = Field(min_length=1)
     channel: IwencaiChannel
     size: int = Field(default=10, gt=0)
-
-
-class StockNewsRequest(BaseModel):
-    symbol: str
-    time_range: Literal["w", "d", "m"] = "w"
-
-
-class StockNewsData(BaseModel):
-    google: Any | None = None
-    twitter: Any | None = None
-    xueqiu: Any | None = None
-
-
-class StockNewsResponse(BaseModel):
-    status: Literal["ok"] = "ok"
-    data: StockNewsData

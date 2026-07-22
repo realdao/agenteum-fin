@@ -42,8 +42,9 @@ Covered by dedicated providers (added 2026-07-22):
 
 ## Stock Data — Still Open
 
-- A-share stock news (dedicated provider; `stock_news` currently depends on
-  external `opencli`, iwencai news channel is a partial substitute).
+- A-share stock news (dedicated provider; the former opencli-based `stock_news`
+  tool was removed because opencli needs a browser environment unavailable on
+  headless servers — iwencai news channel is the current substitute).
 - 同花顺热点 reason tags (人工标注题材归因) — iwencai screening does not
   expose these tags; a dedicated provider is still needed for theme
   attribution.

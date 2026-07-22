@@ -159,28 +159,6 @@ def _terminate_process_tree(proc: subprocess.Popen) -> None:
         proc.wait()
 
 
-def _write_fake_opencli(directory: Path) -> Path:
-    script = directory / "fake_opencli.py"
-    script.write_text(
-        "\n".join(
-            [
-                "import json",
-                "import os",
-                "import sys",
-                "from pathlib import Path",
-                "log_dir = Path(os.environ['AGENTEUM_FIN_FAKE_OPENCLI_LOG_DIR'])",
-                "log_dir.mkdir(parents=True, exist_ok=True)",
-                "path = log_dir / f'{os.getpid()}.json'",
-                "path.write_text(json.dumps(sys.argv[1:], ensure_ascii=False), encoding='utf-8')",
-                "print('[]')",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    script.chmod(0o755)
-    return script
-
-
 @pytest.fixture
 def claude_tmp_path() -> Path:
     path = E2E_TMP_ROOT / uuid.uuid4().hex
@@ -207,8 +185,6 @@ def server(claude_e2e_dir: Path) -> subprocess.Popen:
         pytest.skip(f"port {SERVER_PORT} is already in use")
 
     uv = _find_uv()
-    fake_opencli = _write_fake_opencli(claude_e2e_dir)
-    log_dir = claude_e2e_dir / "opencli-calls"
     proc = subprocess.Popen(
         [uv, "run", "agenteum-fin"],
         stdout=subprocess.PIPE,
@@ -220,8 +196,6 @@ def server(claude_e2e_dir: Path) -> subprocess.Popen:
             "AGENTEUM_HOST": "127.0.0.1",
             "AGENTEUM_PORT": str(SERVER_PORT),
             "AGENTEUM_ALLOW_REMOTE": "false",
-            "AGENTEUM_FIN_FAKE_OPENCLI_LOG_DIR": str(log_dir),
-            "AGENTEUM_FIN_OPENCLI_COMMAND": f"python {fake_opencli}",
         },
     )
     try:
@@ -252,38 +226,3 @@ def test_stock_profile_tool_is_called_via_claude_code(
 
     tool_input = tool_event.get("input", {})
     assert tool_input.get("symbol") in {"600519", "SH600519", "600519.SH"}
-
-
-def test_stock_news_hk_xueqiu_symbol_is_called_via_claude_code(
-    server: subprocess.Popen,
-    claude_tmp_path: Path,
-    claude_e2e_dir: Path,
-) -> None:
-    mcp_config = _write_mcp_config(claude_tmp_path / "mcp.json")
-    log_dir = claude_e2e_dir / "opencli-calls"
-    shutil.rmtree(log_dir, ignore_errors=True)
-
-    prompt = "请通过 agenteum-fin 查询 00700 的 stock_news，time_range 用 d，只需要调用工具"
-    stdout, stderr, rc = _run_claude(prompt, mcp_config=mcp_config)
-
-    assert rc == 0, f"claude exited with {rc}. stdout:\n{stdout}\nstderr:\n{stderr}"
-
-    events = _parse_claude_json_events(stdout)
-    assert events, f"No JSON events parsed from stdout. stdout:\n{stdout}\nstderr:\n{stderr}"
-
-    tool_event = _find_tool_use_event(events, "stock_news")
-    assert tool_event is not None, (
-        "No stock_news tool_use event found. Events:\n"
-        + json.dumps(events, indent=2, ensure_ascii=False)
-    )
-
-    tool_input = tool_event.get("input", {})
-    assert tool_input.get("symbol") in {"00700", "HK00700", "00700.HK"}
-    assert tool_input.get("time_range") == "d"
-
-    assert log_dir.exists(), "fake opencli was not called"
-    calls = [
-        json.loads(path.read_text(encoding="utf-8"))
-        for path in log_dir.glob("*.json")
-    ]
-    assert ["xueqiu", "comments", "00700", "-f", "json"] in calls

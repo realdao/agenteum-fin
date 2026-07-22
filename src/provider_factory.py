@@ -21,7 +21,6 @@ from src.services.research_report_service import ResearchReportService
 from src.services.retry import RetryPolicy
 from src.services.stock_f10_service import StockF10Service
 from src.services.stock_kline_service import StockKlineService
-from src.services.stock_news_service import StockNewsService
 from src.services.stock_profile_service import StockProfileService
 
 
@@ -34,7 +33,6 @@ class ServiceBundle:
     f10_service: StockF10Service
     announcement_service: AnnouncementService
     research_report_service: ResearchReportService
-    news_service: StockNewsService
     iwencai_service: IwencaiService | None
 
 
@@ -70,7 +68,6 @@ def build_services(settings: Settings) -> ServiceBundle:
         provider=_research_provider(settings.fin_research_reports_provider, http_client),
         retry_policy=retry_policy,
     )
-    news_service = StockNewsService(profile_service=profile_service)
     iwencai_service = _iwencai_service(settings, http_client, retry_policy)
 
     return ServiceBundle(
@@ -81,7 +78,6 @@ def build_services(settings: Settings) -> ServiceBundle:
         f10_service=f10_service,
         announcement_service=announcement_service,
         research_report_service=research_report_service,
-        news_service=news_service,
         iwencai_service=iwencai_service,
     )
 
