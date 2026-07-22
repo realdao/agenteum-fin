@@ -5,8 +5,25 @@ import pytest
 from src.config import Settings, is_remote_bind_host
 
 
-def test_settings_defaults_match_spec():
-    settings = Settings()
+def test_settings_defaults_match_spec(monkeypatch):
+    # 隔离真实 .env 与环境变量，断言的是代码默认值而非本机配置。
+    for var in (
+        "AGENTEUM_HOST",
+        "AGENTEUM_PORT",
+        "AGENTEUM_ALLOW_REMOTE",
+        "AGENTEUM_FIN_REQUEST_TIMEOUT",
+        "AGENTEUM_FIN_RETRY_ATTEMPTS",
+        "AGENTEUM_FIN_A_KLINE_PROVIDER",
+        "AGENTEUM_FIN_HK_KLINE_PROVIDER",
+        "AGENTEUM_FIN_PROFILE_PROVIDER",
+        "AGENTEUM_FIN_FINANCIAL_STATEMENTS_PROVIDER",
+        "AGENTEUM_FIN_F10_PROVIDER",
+        "AGENTEUM_FIN_ANNOUNCEMENTS_PROVIDER",
+        "AGENTEUM_FIN_RESEARCH_REPORTS_PROVIDER",
+        "AGENTEUM_FIN_IWENCAI_PROVIDER",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    settings = Settings(_env_file=None)
 
     assert settings.host == "127.0.0.1"
     assert settings.port == 8766
@@ -14,7 +31,7 @@ def test_settings_defaults_match_spec():
     assert settings.fin_request_timeout == 15.0
     assert settings.fin_retry_attempts == 1
     assert settings.fin_a_kline_provider == "mootdx"
-    assert settings.fin_hk_kline_provider == "none"
+    assert settings.fin_hk_kline_provider == "tencent"
     assert settings.fin_profile_provider == "tencent"
     assert settings.fin_financial_statements_provider == "sina"
     assert settings.fin_f10_provider == "mootdx"

@@ -8,9 +8,9 @@ Purpose: daily and higher-period OHLCV bars.
 
 Parameters: `symbol`, `period` (`day`, `week`, `month`, `quarter`, `year`), optional `start_date`, optional `end_date`, `adjust` (`none`, `qfq`, `hfq`), and optional positive `limit`.
 
-Coverage: A-shares use the configured A-share K-line provider, default `mootdx`. Hong Kong K-line returns `unsupported_market` in v1 because no stable provider passed the checkpoint.
+Coverage: A-shares use the configured A-share K-line provider, default `mootdx`. Hong Kong K-line uses the configured Hong Kong provider, default `tencent` (fqkline), supporting `day`/`week`/`month` periods.
 
-Limitations: v1 does not calculate technical indicators. Adjusted K-line modes `qfq` and `hfq` return `unsupported_adjustment` for the default provider.
+Limitations: v1 does not calculate technical indicators. Adjusted K-line modes `qfq` and `hfq` return `unsupported_adjustment` for the default A-share provider but are supported by the default Hong Kong provider. Tencent Hong Kong bars do not expose `amount`.
 
 ## stock_profile
 

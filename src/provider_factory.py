@@ -11,6 +11,7 @@ from src.providers.f10.mootdx_f10 import MootdxF10Provider
 from src.providers.financials.sina import SinaFinancialStatementsProvider
 from src.providers.iwencai.client import IwencaiClient
 from src.providers.market_data.mootdx_kline import MootdxKlineProvider
+from src.providers.market_data.tencent_kline import TencentKlineProvider
 from src.providers.profile.tencent import TencentProfileProvider
 from src.providers.research.eastmoney import EastmoneyResearchReportProvider
 from src.services.announcement_service import AnnouncementService
@@ -43,7 +44,7 @@ def build_services(settings: Settings) -> ServiceBundle:
 
     kline_service = StockKlineService(
         a_share_provider=_a_kline_provider(settings.fin_a_kline_provider),
-        hk_provider=_hk_kline_provider(settings.fin_hk_kline_provider),
+        hk_provider=_hk_kline_provider(settings.fin_hk_kline_provider, http_client),
         retry_policy=retry_policy,
     )
     profile_service = StockProfileService(
@@ -93,7 +94,9 @@ def _a_kline_provider(provider_name: str):
     raise _unknown_provider("a_kline", provider_name)
 
 
-def _hk_kline_provider(provider_name: str):
+def _hk_kline_provider(provider_name: str, client: httpx.AsyncClient):
+    if provider_name == "tencent":
+        return TencentKlineProvider(client=client)
     if provider_name == "none":
         return None
     raise _unknown_provider("hk_kline", provider_name)

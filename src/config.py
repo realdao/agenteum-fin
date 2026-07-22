@@ -27,7 +27,7 @@ class Settings(BaseSettings):
         alias="AGENTEUM_FIN_RETRY_BACKOFF_SECONDS",
     )
     fin_a_kline_provider: str = Field(default="mootdx", alias="AGENTEUM_FIN_A_KLINE_PROVIDER")
-    fin_hk_kline_provider: str = Field(default="none", alias="AGENTEUM_FIN_HK_KLINE_PROVIDER")
+    fin_hk_kline_provider: str = Field(default="tencent", alias="AGENTEUM_FIN_HK_KLINE_PROVIDER")
     fin_profile_provider: str = Field(default="tencent", alias="AGENTEUM_FIN_PROFILE_PROVIDER")
     fin_financial_statements_provider: str = Field(
         default="sina",

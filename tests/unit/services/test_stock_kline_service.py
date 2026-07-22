@@ -52,6 +52,21 @@ async def test_a_share_kline_success_uses_configured_provider():
     assert response.data.bars[0].date == "2026-05-22"
 
 
+class FakeHkKlineProvider(FakeAshareKlineProvider):
+    name = "tencent"
+
+
+@pytest.mark.asyncio
+async def test_hk_kline_success_uses_configured_provider():
+    service = StockKlineService(a_share_provider=None, hk_provider=FakeHkKlineProvider())
+
+    response = await service.get_kline(KlineRequest(symbol="00700"))
+
+    assert response.provider == "tencent"
+    assert response.data.symbol.market == "hk"
+    assert response.data.bars[0].date == "2026-05-22"
+
+
 @pytest.mark.asyncio
 async def test_kline_rejects_unsupported_adjustment_before_provider_call():
     service = StockKlineService(a_share_provider=FakeAshareKlineProvider(), hk_provider=None)
