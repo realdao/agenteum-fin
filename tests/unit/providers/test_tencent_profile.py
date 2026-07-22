@@ -31,7 +31,7 @@ async def test_tencent_maps_a_share_units():
 
 
 @pytest.mark.asyncio
-async def test_tencent_maps_hk_fields_without_pb_or_turnover_rate():
+async def test_tencent_maps_hk_fields_without_turnover_rate():
     async def handler(request: httpx.Request) -> httpx.Response:
         assert "q=hk00700" in str(request.url)
         return httpx.Response(200, content=fixture_text().encode("gbk"))
@@ -45,5 +45,5 @@ async def test_tencent_maps_hk_fields_without_pb_or_turnover_rate():
     assert data.volume == 23998219.0
     assert data.amount == 10609807754.648
     assert data.turnover_rate is None
-    assert data.pb is None
+    assert data.pb == 3.16
     assert data.currency == "HKD"

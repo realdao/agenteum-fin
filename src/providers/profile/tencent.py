@@ -106,6 +106,10 @@ class TencentProfileProvider:
         )
 
     def _map_hk(self, symbol: NormalizedSymbol, values: list[str]) -> StockProfileData:
+        # 港股字段位置与 A 股不同，不可混用同一组索引。映射依据实测字段地图
+        # （2026-07-22，hk00700/hk01398/hk00939 交叉验证）：成交量 idx 6（股），
+        # PB idx 58（工行 0.56 / 建行 0.55 验证）。idx 29 实测值与 idx 6 相同，
+        # 但未经校验，成交量以 idx 6 为准。
         return StockProfileData(
             symbol=symbol,
             name=_str(values, 1),
@@ -117,11 +121,11 @@ class TencentProfileProvider:
             change_percent=_float(values, 32),
             high=_float(values, 33),
             low=_float(values, 34),
-            volume=_float(values, 29),
+            volume=_float(values, 6),
             amount=_null_if_zero(_float(values, 37)),
             turnover_rate=None,
             pe_ttm=_float(values, 39),
-            pb=None,
+            pb=_float(values, 58),
             market_cap=_scale(_float(values, 44), 100000000),
             float_market_cap=_scale(_float(values, 45), 100000000),
             currency=_str(values, 75),
