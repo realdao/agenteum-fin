@@ -35,8 +35,8 @@ class MootdxKlineProvider:
                 error_type=ErrorType.PROVIDER_UNAVAILABLE,
                 provider=self.name,
                 message=(
-                    "mootdx is not installed. Install a verified mootdx wheel separately "
-                    "to enable live A-share K-line data."
+                    "mootdx is not installed. It is a declared project dependency; "
+                    "run 'uv sync' to install it and enable live A-share K-line data."
                 ),
             ) from exc
         self.quotes = Quotes.factory(market="std")

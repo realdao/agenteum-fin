@@ -8,12 +8,20 @@ dependencies = [
   "fastapi>=0.115,<1",
   "httpx>=0.28,<1",
   "mcp>=1.27.1,<2",
+  "mootdx>=0.11.7,<0.12",
   "pandas>=2.2,<3",
   "pydantic>=2.11,<3",
   "pydantic-settings>=2.9,<3",
   "python-dotenv>=1,<2",
   "uvicorn[standard]>=0.34,<1",
 ]
+
+# mootdx 0.11.x pins httpx>=0.25,<0.26, which conflicts with the MCP SDK's
+# httpx>=0.28 requirement. mootdx only uses httpx for its HTTP server-list
+# (bestip) fetch and works fine with httpx 0.28 (verified live with 0.28.1),
+# so force-resolve httpx to our direct constraint.
+[tool.uv]
+override-dependencies = ["httpx>=0.28,<1"]
 
 [build-system]
 requires = ["setuptools>=80"]

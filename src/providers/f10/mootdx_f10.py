@@ -31,8 +31,8 @@ class MootdxF10Provider:
                 error_type=ErrorType.PROVIDER_UNAVAILABLE,
                 provider=self.name,
                 message=(
-                    "mootdx is not installed. Install a verified mootdx wheel separately "
-                    "to enable live F10 data."
+                    "mootdx is not installed. It is a declared project dependency; "
+                    "run 'uv sync' to install it and enable live F10 data."
                 ),
             ) from exc
         self.quotes = Quotes.factory(market="std")

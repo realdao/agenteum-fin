@@ -51,3 +51,5 @@ The service runs `agenteum-fin` from the project venv as the invoking user (or a
 ## Provider Switching
 
 Provider selection is static for a running process. Change `.env`, then restart the server.
+
+`mootdx` (default A-share K-line and F10 provider) is a declared dependency. Its PyPI metadata pins `httpx<0.26`, which conflicts with the MCP SDK, so `pyproject.toml` carries a `tool.uv` override forcing `httpx>=0.28` — install with `uv sync` (plain `pip install` cannot resolve this). mootdx reaches 通达信 quote servers over TCP and needs a stable route to mainland-China IPs.
