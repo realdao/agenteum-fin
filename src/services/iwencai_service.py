@@ -127,12 +127,8 @@ class IwencaiService:
         }
         if raw.kind == "json_list":
             items = raw.body
-            # 裸 list 响应没有可透传的外层 dict；raw_response 为合成的 {"data": [...]}
-            # 包装，并非网关真实原始体，仅为与 json_dict 分支保持同一字段形状。
-            gateway_body: Any = {"data": raw.body}
         elif raw.kind == "json_dict" and isinstance(raw.body.get("data"), list):
             items = raw.body["data"]
-            gateway_body = raw.body
         else:
             return self._gateway_error_envelope(base, raw)
         envelope: dict[str, Any] = {
@@ -140,9 +136,11 @@ class IwencaiService:
             **base,
             "returned_count": len(items),
             "size": request.size,
+            # 网关规范条件六要求透明传递：data 原样为网关返回的条目列表，
+            # 不做去重/清洗/重组。原先随附的 raw_response（json_list 时为合成的
+            # {"data": [...]} 包装）与 data 完全重复，已移除以减半响应体积；
+            # 错误信封仍在 gateway_response 字段透传网关原始错误体。
             "data": items,
-            # 透传体过 redact_payload：仅掩 SECRET_KEYS 命名字段，不改写数据结构。
-            "raw_response": redact_payload(gateway_body),
         }
         if not items:
             envelope["empty_data_tip"] = _empty_data_tip()

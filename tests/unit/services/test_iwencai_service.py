@@ -221,7 +221,7 @@ async def test_transport_retry_marks_second_attempt_as_retry():
 
 
 @pytest.mark.asyncio
-async def test_search_envelope_contains_data_and_raw_response():
+async def test_search_envelope_contains_data_without_raw_response_duplicate():
     client = FakeIwencaiClient(raw=raw_from_fixture("iwencai_search_news.json"))
     service = IwencaiService(client=client)
 
@@ -233,8 +233,9 @@ async def test_search_envelope_contains_data_and_raw_response():
     assert envelope["channel"] == "news"
     assert envelope["size"] == 10
     assert envelope["returned_count"] == 2
-    assert envelope["data"][0]["title"] == "人工智能产业新政策发布"
-    assert envelope["raw_response"] == fixture_json("iwencai_search_news.json")
+    assert envelope["data"] == fixture_json("iwencai_search_news.json")["data"]
+    # raw_response 曾与 data 完全重复，已移除以减半响应体积。
+    assert "raw_response" not in envelope
     assert "empty_data_tip" not in envelope
 
 
@@ -251,7 +252,7 @@ async def test_search_empty_data_adds_empty_tip():
 
 
 @pytest.mark.asyncio
-async def test_search_list_body_is_wrapped():
+async def test_search_list_body_is_returned_as_data():
     raw = IwencaiRawResponse(kind="json_list", body=[{"title": "x"}], trace_id="t" * 64)
     service = IwencaiService(client=FakeIwencaiClient(raw=raw))
 
@@ -260,19 +261,7 @@ async def test_search_list_body_is_wrapped():
     assert envelope["status"] == "ok"
     assert envelope["returned_count"] == 1
     assert envelope["data"] == [{"title": "x"}]
-    assert envelope["raw_response"] == {"data": [{"title": "x"}]}
-
-
-@pytest.mark.asyncio
-async def test_search_raw_response_is_redacted_for_secret_keys():
-    body = {"data": [{"title": "x"}], "authorization": "Bearer abc"}
-    raw = IwencaiRawResponse(kind="json_dict", body=body, trace_id="t" * 64)
-    service = IwencaiService(client=FakeIwencaiClient(raw=raw))
-
-    envelope = await service.search(search_request())
-
-    assert envelope["raw_response"]["authorization"] == "[REDACTED]"
-    assert envelope["raw_response"]["data"] == [{"title": "x"}]
+    assert "raw_response" not in envelope
 
 
 @pytest.mark.asyncio
