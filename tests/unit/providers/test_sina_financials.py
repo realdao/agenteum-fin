@@ -82,6 +82,78 @@ async def test_sina_maps_nested_report_data_items_and_period_metadata():
 
 
 @pytest.mark.asyncio
+async def test_sina_drops_null_value_line_items():
+    fixture = {
+        "result": {
+            "data": {
+                "report_date": [
+                    {"date_value": "20260331", "date_description": "2026一季报"}
+                ],
+                "report_list": {
+                    "20260331": {
+                        "data": [
+                            {
+                                "item_field": "BIZTOTINCO",
+                                "item_title": "营业总收入",
+                                "item_value": "11191552278.540000",
+                            },
+                            {
+                                "item_field": "SETTEXPL",
+                                "item_title": "结算备付金",
+                                "item_value": None,
+                            },
+                        ],
+                        # legacy shape：dict 值科目
+                        "f001": {"item_title": "营业总收入", "value": "100"},
+                        "f999": {"item_title": "拆出资金", "value": None},
+                    }
+                },
+            }
+        }
+    }
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=fixture)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    provider = SinaFinancialStatementsProvider(client=client)
+
+    group = await provider.get_statement(normalize_symbol("601012"), "income", periods=1)
+
+    # nested 分支优先：null 的结算备付金被丢弃，仅保留有值科目。
+    assert [item.field_code for item in group.periods[0].items] == ["BIZTOTINCO"]
+
+
+@pytest.mark.asyncio
+async def test_sina_drops_null_value_line_items_in_legacy_shape():
+    fixture = {
+        "result": {
+            "data": {
+                "report_date": [
+                    {"date_value": "20260331", "date_description": "2026一季报"}
+                ],
+                "report_list": {
+                    "20260331": {
+                        "f001": {"item_title": "营业总收入", "value": "100"},
+                        "f999": {"item_title": "拆出资金", "value": None},
+                    }
+                },
+            }
+        }
+    }
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=fixture)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    provider = SinaFinancialStatementsProvider(client=client)
+
+    group = await provider.get_statement(normalize_symbol("601012"), "income", periods=1)
+
+    assert [item.field_code for item in group.periods[0].items] == ["f001"]
+
+
+@pytest.mark.asyncio
 async def test_sina_rejects_unknown_statement_type_with_provider_error():
     client = httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(200)))
     provider = SinaFinancialStatementsProvider(client=client)

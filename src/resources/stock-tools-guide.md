@@ -30,7 +30,7 @@ Parameters: `symbol`, `statement_type` (`balance_sheet`, `income`, `cash_flow`, 
 
 Coverage: A-shares use Sina by default. Hong Kong symbols return `unsupported_market` in v1.
 
-Limitations: v1 preserves provider field codes and Chinese item titles instead of forcing a universal accounting taxonomy.
+Limitations: v1 preserves provider field codes and Chinese item titles instead of forcing a universal accounting taxonomy. Line items whose value is null upstream (for example insurance- or banking-only accounts on an industrial company) are dropped to keep responses compact.
 
 ## stock_f10
 

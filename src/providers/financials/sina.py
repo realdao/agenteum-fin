@@ -71,16 +71,20 @@ def _map_line_items(raw_period: object, statement_type: str) -> list[FinancialLi
     if not isinstance(raw_period, dict):
         return []
     if isinstance(raw_period.get("data"), list):
-        return [
+        items = [
             _map_nested_line_item(item, statement_type)
             for item in raw_period["data"]
             if isinstance(item, dict)
         ]
-    return [
-        _map_legacy_line_item(field_code, item, statement_type)
-        for field_code, item in raw_period.items()
-        if isinstance(item, dict)
-    ]
+    else:
+        items = [
+            _map_legacy_line_item(field_code, item, statement_type)
+            for field_code, item in raw_period.items()
+            if isinstance(item, dict)
+        ]
+    # 上游对不适用科目（如非金融企业的结算备付金、拆出资金）返回 null；
+    # 这些科目占报表字段一半以上，直接丢弃以压缩响应体积。
+    return [item for item in items if item.value is not None]
 
 
 def _map_nested_line_item(item: dict[str, object], statement_type: str) -> FinancialLineItem:
