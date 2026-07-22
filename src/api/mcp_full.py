@@ -18,6 +18,7 @@ from src.schemas import (
     KlineRequest,
     PageSizeRequest,
     StockNewsRequest,
+    StockProfilesRequest,
     ToolErrorResponse,
 )
 
@@ -80,10 +81,15 @@ def create_mcp_server(
             return _validation_error_response(exc).model_dump(by_alias=True)
 
     @mcp.tool()
-    async def stock_profile(symbol: str) -> dict:
-        """Return lightweight structured stock profile, quote, and valuation fields."""
+    async def stock_profile(symbols: list[str]) -> dict:
+        """Return quote, valuation, and profile fields for one or more stocks.
+
+        Accepts a batch of up to 40 symbols (A-share and Hong Kong can be mixed);
+        per-symbol failures are reported in data.errors without failing the batch.
+        """
         try:
-            response = await profile_service.get_profile(symbol)
+            request = StockProfilesRequest(symbols=symbols)
+            response = await profile_service.get_profiles(request.symbols)
             return response.model_dump(by_alias=True)
         except ProviderError as exc:
             return _provider_error_response(exc).model_dump(by_alias=True)

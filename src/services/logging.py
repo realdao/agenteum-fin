@@ -17,7 +17,7 @@ async def logged_provider_call(
     *,
     operation: str,
     provider: str,
-    symbol: NormalizedSymbol,
+    symbol: NormalizedSymbol | None,
     fallback_count: int,
     call: Callable[[], Awaitable[T]],
 ) -> T:
@@ -58,18 +58,19 @@ def _log(
     *,
     operation: str,
     provider: str,
-    symbol: NormalizedSymbol,
+    symbol: NormalizedSymbol | None,
     latency_ms: float,
     status: str,
     fallback_count: int,
     error_type: str | None = None,
     http_status: int | None = None,
 ) -> None:
+    # symbol 为 None 表示批量调用（如批量 stock_profile），日志不绑定单一标的。
     extra = {
         "operation": operation,
         "provider": provider,
-        "market": symbol.market,
-        "symbol": symbol.display_symbol,
+        "market": symbol.market if symbol else None,
+        "symbol": symbol.display_symbol if symbol else None,
         "latency_ms": latency_ms,
         "status": status,
         "fallback_count": fallback_count,

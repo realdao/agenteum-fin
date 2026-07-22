@@ -122,10 +122,11 @@ class StockNewsService:
         if self.profile_service is None:
             return None
         try:
-            response = await self.profile_service.get_profile(raw_symbol)
+            response = await self.profile_service.get_profiles([raw_symbol])
         except ProviderError:
             return None
-        name = getattr(getattr(response, "data", None), "name", None)
+        profiles = getattr(getattr(response, "data", None), "profiles", None) or []
+        name = getattr(profiles[0], "name", None) if profiles else None
         return name or None
 
     async def _source_json(self, source: str, command: list[str]) -> Any | None:

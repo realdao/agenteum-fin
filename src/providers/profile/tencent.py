@@ -16,8 +16,23 @@ class TencentProfileProvider:
     def __init__(self, *, client: httpx.AsyncClient) -> None:
         self.client = client
 
-    async def get_profile(self, symbol: NormalizedSymbol) -> StockProfileData:
-        query = self._query_symbol(symbol)
+    async def get_profiles(self, symbols: list[NormalizedSymbol]) -> list[StockProfileData]:
+        if not symbols:
+            return []
+        queries = [self._query_symbol(symbol) for symbol in symbols]
+        text = await self._fetch(",".join(queries))
+        profiles: list[StockProfileData] = []
+        for symbol, query in zip(symbols, queries, strict=True):
+            values = self._values_for_query(text, query)
+            if values is None:
+                continue
+            if symbol.market == "hk":
+                profiles.append(self._map_hk(symbol, values))
+            else:
+                profiles.append(self._map_a_share(symbol, values))
+        return profiles
+
+    async def _fetch(self, query: str) -> str:
         try:
             response = await self.client.get(
                 self.url.format(query=query),
@@ -51,35 +66,23 @@ class TencentProfileProvider:
                 http_status=response.status_code,
                 payload=response.text,
             )
-        text = response.content.decode("gbk", errors="replace")
-        values = self._values_for_query(text, query)
-        if symbol.market == "hk":
-            return self._map_hk(symbol, values)
-        return self._map_a_share(symbol, values)
+        return response.content.decode("gbk", errors="replace")
 
     def _query_symbol(self, symbol: NormalizedSymbol) -> str:
         if symbol.market == "hk":
             return f"hk{symbol.symbol}"
         return f"{symbol.exchange}{symbol.symbol}"
 
-    def _values_for_query(self, text: str, query: str) -> list[str]:
+    def _values_for_query(self, text: str, query: str) -> list[str] | None:
+        # 批量场景下单只缺失/字段不足不抛错，返回 None 由 service 记为
+        # 该 symbol 的 symbol_not_found，不影响同批其他标的。
         pattern = rf"v_{re.escape(query)}=\"([^\"]*)\""
         match = re.search(pattern, text)
         if match is None:
-            raise ProviderError(
-                error_type=ErrorType.INVALID_RESPONSE,
-                provider=self.name,
-                message=f"Tencent quote did not contain {query}.",
-                payload=text,
-            )
+            return None
         values = match.group(1).split("~")
         if len(values) < 53:
-            raise ProviderError(
-                error_type=ErrorType.INVALID_RESPONSE,
-                provider=self.name,
-                message=f"Tencent quote returned too few fields: {len(values)}.",
-                payload=values,
-            )
+            return None
         return values
 
     def _map_a_share(self, symbol: NormalizedSymbol, values: list[str]) -> StockProfileData:

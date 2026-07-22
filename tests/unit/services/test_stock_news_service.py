@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 import pytest
 
 from src.errors import ErrorType, ProviderError
-from src.schemas import StockProfileData, StockProfileResponse
+from src.schemas import StockProfileData, StockProfileResponse, StockProfilesData
 from src.services.stock_news_service import OpenCliCommandResult, StockNewsService
 from src.utils.symbols import normalize_symbol
 
@@ -17,8 +17,8 @@ class FakeProfileService:
         self.error = error
         self.calls: list[str] = []
 
-    async def get_profile(self, symbol: str) -> StockProfileResponse:
-        self.calls.append(symbol)
+    async def get_profiles(self, symbols: list[str]) -> StockProfileResponse:
+        self.calls.extend(symbols)
         if self.error is not None:
             raise self.error
         return StockProfileResponse(
@@ -27,7 +27,13 @@ class FakeProfileService:
             provider_status="ok",
             fetched_at="2026-06-02T00:00:00+00:00",
             fallbacks=[],
-            data=StockProfileData(symbol=normalize_symbol(symbol), name=self.name),
+            data=StockProfilesData(
+                profiles=[
+                    StockProfileData(symbol=normalize_symbol(symbol), name=self.name)
+                    for symbol in symbols
+                ],
+                errors=[],
+            ),
         )
 
 

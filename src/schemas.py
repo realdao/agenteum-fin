@@ -118,8 +118,23 @@ class StockProfileData(BaseModel):
     metadata_sources: dict[str, str] = Field(default_factory=dict)
 
 
+class StockProfilesRequest(BaseModel):
+    # 上限 40：腾讯快照接口单批次的实测稳妥数量。
+    symbols: list[str] = Field(min_length=1, max_length=40)
+
+
+class StockProfileItemError(BaseModel):
+    symbol: str
+    error: ErrorDetail
+
+
+class StockProfilesData(BaseModel):
+    profiles: list[StockProfileData]
+    errors: list[StockProfileItemError] = Field(default_factory=list)
+
+
 class StockProfileResponse(BaseToolResponse):
-    data: StockProfileData
+    data: StockProfilesData
 
 
 class FinancialStatementsRequest(BaseModel):

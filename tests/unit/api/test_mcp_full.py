@@ -89,7 +89,7 @@ async def test_mcp_provider_errors_include_fallback_history():
     fallback = FallbackRecord(from_provider="primary", to_provider="fallback", reason="timeout")
 
     class FailingProfileService:
-        async def get_profile(self, symbol):
+        async def get_profiles(self, symbols):
             raise ProviderError(
                 error_type=ErrorType.TIMEOUT,
                 provider="fallback",
@@ -99,7 +99,7 @@ async def test_mcp_provider_errors_include_fallback_history():
 
     mcp = create_mcp_server(profile_service=FailingProfileService())
 
-    result = _tool_result_data(await mcp.call_tool("stock_profile", {"symbol": "600519"}))
+    result = _tool_result_data(await mcp.call_tool("stock_profile", {"symbols": ["600519"]}))
 
     assert result["status"] == "error"
     assert result["error"]["type"] == "timeout"
@@ -502,7 +502,7 @@ async def test_mcp_iwencai_search_config_error_when_api_key_missing():
 @pytest.mark.asyncio
 async def test_mcp_stock_tool_error_responses_do_not_carry_source():
     class FailingProfileService:
-        async def get_profile(self, symbol):
+        async def get_profiles(self, symbols):
             raise ProviderError(
                 error_type=ErrorType.TIMEOUT,
                 provider="tencent",
@@ -511,7 +511,7 @@ async def test_mcp_stock_tool_error_responses_do_not_carry_source():
 
     mcp = create_mcp_server(profile_service=FailingProfileService())
 
-    result = _tool_result_data(await mcp.call_tool("stock_profile", {"symbol": "600519"}))
+    result = _tool_result_data(await mcp.call_tool("stock_profile", {"symbols": ["600519"]}))
 
     assert result["status"] == "error"
     assert "source" not in result

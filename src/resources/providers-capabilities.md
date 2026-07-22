@@ -16,7 +16,7 @@ Provider selection is static for a running process. Change environment variables
 ## Provider Notes
 
 - mootdx: default A-share K-line and F10 provider, lazy-loaded because current package metadata conflicts with the MCP SDK dependency graph. If `mootdx` is not installed in the runtime environment, K-line and F10 calls return `provider_unavailable`.
-- Tencent quote: default A-share and Hong Kong profile quote provider. A-share and Hong Kong field indices are mapped separately.
+- Tencent quote: default A-share and Hong Kong profile quote provider. A-share and Hong Kong field indices are mapped separately. Supports batched snapshots (comma-joined codes, up to 40 per request).
 - Tencent kline: default Hong Kong K-line provider (web.ifzq.gtimg.cn fqkline). Supports `day`, `week`, `month` periods and `none`/`qfq`/`hfq` adjustments; `quarter`/`year` return `unsupported_period`. Response row order is date, open, close, high, low, volume; `amount` is not exposed and stays `null`.
 - Sina: default A-share financial statements provider, using the `report_date` and `report_list` response shape.
 - cninfo: default A-share announcements provider.
