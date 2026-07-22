@@ -19,7 +19,6 @@ def test_settings_defaults_match_spec(monkeypatch):
         "AGENTEUM_FIN_FINANCIAL_STATEMENTS_PROVIDER",
         "AGENTEUM_FIN_F10_PROVIDER",
         "AGENTEUM_FIN_ANNOUNCEMENTS_PROVIDER",
-        "AGENTEUM_FIN_RESEARCH_REPORTS_PROVIDER",
         "AGENTEUM_FIN_IWENCAI_PROVIDER",
     ):
         monkeypatch.delenv(var, raising=False)
@@ -36,7 +35,6 @@ def test_settings_defaults_match_spec(monkeypatch):
     assert settings.fin_financial_statements_provider == "sina"
     assert settings.fin_f10_provider == "mootdx"
     assert settings.fin_announcements_provider == "cninfo"
-    assert settings.fin_research_reports_provider == "eastmoney"
     assert settings.fin_iwencai_provider == "iwencai"
 
 

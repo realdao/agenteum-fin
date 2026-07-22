@@ -47,7 +47,6 @@ async def test_mcp_server_can_be_created_with_fake_services():
         financial_service=object(),
         f10_service=object(),
         announcement_service=object(),
-        research_report_service=object(),
     )
 
     assert mcp.name == "Agenteum Fin"

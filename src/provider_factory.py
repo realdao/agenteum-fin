@@ -13,11 +13,9 @@ from src.providers.iwencai.client import IwencaiClient
 from src.providers.market_data.mootdx_kline import MootdxKlineProvider
 from src.providers.market_data.tencent_kline import TencentKlineProvider
 from src.providers.profile.tencent import TencentProfileProvider
-from src.providers.research.eastmoney import EastmoneyResearchReportProvider
 from src.services.announcement_service import AnnouncementService
 from src.services.financial_statement_service import FinancialStatementService
 from src.services.iwencai_service import IwencaiService
-from src.services.research_report_service import ResearchReportService
 from src.services.retry import RetryPolicy
 from src.services.stock_f10_service import StockF10Service
 from src.services.stock_kline_service import StockKlineService
@@ -32,7 +30,6 @@ class ServiceBundle:
     financial_service: FinancialStatementService
     f10_service: StockF10Service
     announcement_service: AnnouncementService
-    research_report_service: ResearchReportService
     iwencai_service: IwencaiService | None
 
 
@@ -64,10 +61,6 @@ def build_services(settings: Settings) -> ServiceBundle:
         provider=_announcement_provider(settings.fin_announcements_provider, http_client),
         retry_policy=retry_policy,
     )
-    research_report_service = ResearchReportService(
-        provider=_research_provider(settings.fin_research_reports_provider, http_client),
-        retry_policy=retry_policy,
-    )
     iwencai_service = _iwencai_service(settings, http_client, retry_policy)
 
     return ServiceBundle(
@@ -77,7 +70,6 @@ def build_services(settings: Settings) -> ServiceBundle:
         financial_service=financial_service,
         f10_service=f10_service,
         announcement_service=announcement_service,
-        research_report_service=research_report_service,
         iwencai_service=iwencai_service,
     )
 
@@ -124,14 +116,6 @@ def _announcement_provider(provider_name: str, client: httpx.AsyncClient):
     if provider_name == "none":
         return None
     raise _unknown_provider("announcements", provider_name)
-
-
-def _research_provider(provider_name: str, client: httpx.AsyncClient):
-    if provider_name == "eastmoney":
-        return EastmoneyResearchReportProvider(client=client)
-    if provider_name == "none":
-        return None
-    raise _unknown_provider("research_reports", provider_name)
 
 
 def _iwencai_service(

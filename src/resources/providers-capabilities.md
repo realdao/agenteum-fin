@@ -10,7 +10,6 @@ Provider selection is static for a running process. Change environment variables
 - Financial statements: Sina financial report API.
 - F10: `mootdx`.
 - Announcements: cninfo.
-- Research reports: Eastmoney reportapi.
 
 ## Provider Notes
 
@@ -19,12 +18,12 @@ Provider selection is static for a running process. Change environment variables
 - Tencent kline: default Hong Kong K-line provider (web.ifzq.gtimg.cn fqkline). Supports `day`, `week`, `month` periods and `none`/`qfq`/`hfq` adjustments; `quarter`/`year` return `unsupported_period`. Response row order is date, open, close, high, low, volume; `amount` is not exposed and stays `null`.
 - Sina: default A-share financial statements provider, using the `report_date` and `report_list` response shape.
 - cninfo: default A-share announcements provider.
-- Eastmoney reportapi: default A-share research reports provider.
 
 ## v1 Limitations
 
-- Hong Kong financial statements, announcements, and research reports: unsupported_market in v1.
+- Hong Kong financial statements and announcements: unsupported_market in v1.
 - Adjusted K-line modes qfq and hfq: unsupported_adjustment for the default A-share provider (`mootdx`); the default Hong Kong provider (`tencent`) supports them.
+- Research reports are served by `iwencai_search` (channel `report`); the former Eastmoney-based `stock_research_reports` tool was removed because reportapi coverage lagged iwencai by years on some names.
 - Per-stock news is served by `iwencai_search` (channel `news`); the former opencli-based `stock_news` tool was removed because opencli requires a browser environment unavailable on headless servers.
 - Eastmoney push2 and push2his are not defaults because live POC showed proxy instability in this environment.
 - Baidu concept blocks, shareholder count, margin trading, hot topics, and institution consensus EPS remain future-version candidates.

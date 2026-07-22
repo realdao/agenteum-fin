@@ -38,10 +38,6 @@ class Settings(BaseSettings):
         default="cninfo",
         alias="AGENTEUM_FIN_ANNOUNCEMENTS_PROVIDER",
     )
-    fin_research_reports_provider: str = Field(
-        default="eastmoney",
-        alias="AGENTEUM_FIN_RESEARCH_REPORTS_PROVIDER",
-    )
     fin_iwencai_provider: str = Field(default="iwencai", alias="AGENTEUM_FIN_IWENCAI_PROVIDER")
     fin_iwencai_api_key: str | None = Field(default=None, alias="AGENTEUM_FIN_IWENCAI_API_KEY")
 

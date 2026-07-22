@@ -1,6 +1,6 @@
 # Agenteum Fin Stock Tools
 
-Use these tools for conservative listed-company research. All tools normalize common A-share symbols such as `600519`, `SH600519`, and `600519.SH`; Hong Kong symbols such as `00700`, `hk00700`, and `00700.HK`; and return structured error objects instead of provider exceptions. Per-stock news is served by `iwencai_search` (channel `news`), not by the stock_* tools.
+Use these tools for conservative listed-company research. All tools normalize common A-share symbols such as `600519`, `SH600519`, and `600519.SH`; Hong Kong symbols such as `00700`, `hk00700`, and `00700.HK`; and return structured error objects instead of provider exceptions. Per-stock news and sell-side research reports are served by `iwencai_search` (channels `news` and `report`), not by the stock_* tools.
 
 ## stock_kline
 
@@ -49,14 +49,6 @@ Purpose: A-share listed-company announcement metadata.
 Parameters: `symbol` and positive `page_size`.
 
 Coverage: A-shares use cninfo by default. Hong Kong symbols return `unsupported_market` in v1.
-
-## stock_research_reports
-
-Purpose: A-share sell-side research report metadata, ratings, and available EPS forecast fields.
-
-Parameters: `symbol` and positive `page_size`.
-
-Coverage: A-shares use Eastmoney reportapi by default. Hong Kong symbols return `unsupported_market` in v1.
 
 ## Fallbacks And Errors
 

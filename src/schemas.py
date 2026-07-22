@@ -222,26 +222,6 @@ class AnnouncementsResponse(BaseToolResponse):
     data: AnnouncementsData
 
 
-class ResearchReportItem(BaseModel):
-    title: str | None = None
-    publish_date: str | None = None
-    institution: str | None = None
-    rating: str | None = None
-    industry: str | None = None
-    eps_forecast: dict[str, Any] = Field(default_factory=dict)
-    info_code: str | None = None
-    pdf_url: str | None = None
-
-
-class ResearchReportsData(BaseModel):
-    symbol: NormalizedSymbol
-    reports: list[ResearchReportItem]
-
-
-class ResearchReportsResponse(BaseToolResponse):
-    data: ResearchReportsData
-
-
 IwencaiDomain = Literal[
     "finance",
     "market",

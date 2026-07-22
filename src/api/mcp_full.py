@@ -29,7 +29,6 @@ def create_mcp_server(
     financial_service: Any | None = None,
     f10_service: Any | None = None,
     announcement_service: Any | None = None,
-    research_report_service: Any | None = None,
     iwencai_service: Any | None = None,
     allow_remote: bool = False,
 ) -> FastMCP:
@@ -150,21 +149,6 @@ def create_mcp_server(
             return _validation_error_response(exc).model_dump(by_alias=True)
 
     @mcp.tool()
-    async def stock_research_reports(symbol: str, page_size: int = 20) -> dict:
-        """Return A-share sell-side research report metadata."""
-        try:
-            request = PageSizeRequest(symbol=symbol, page_size=page_size)
-            response = await research_report_service.get_reports(
-                request.symbol,
-                page_size=request.page_size,
-            )
-            return response.model_dump(by_alias=True)
-        except ProviderError as exc:
-            return _provider_error_response(exc).model_dump(by_alias=True)
-        except ValidationError as exc:
-            return _validation_error_response(exc).model_dump(by_alias=True)
-
-    @mcp.tool()
     async def iwencai_query(
         query: Annotated[
             str,
@@ -209,12 +193,13 @@ def create_mcp_server(
         """Query THS Iwencai (同花顺问财) structured data by natural language.
 
         Tool routing rules:
-        (a) Known symbol needing K-line, financial statements, F10, announcements,
-            or research reports -> use the stock_* tools.
+        (a) Known symbol needing K-line, financial statements, F10, or
+            announcements -> use the stock_* tools.
         (b) Stock screening, ranking, cross-section comparison, macro, industry,
             or index queries -> use this tool with the matching domain.
         (c) Keyword search over news / research reports / announcements,
-            including per-stock news -> use iwencai_search instead.
+            including per-stock news and research reports -> use iwencai_search
+            instead.
 
         Data source is 同花顺问财 (Iwencai); answers built on this data must credit
         同花顺问财. On first use of a domain, or when a query fails or returns
@@ -274,12 +259,13 @@ def create_mcp_server(
         """Search THS Iwencai (同花顺问财) news, research reports, or announcements.
 
         Tool routing rules:
-        (a) Known symbol needing K-line, financial statements, F10, announcements,
-            or research reports -> use the stock_* tools.
+        (a) Known symbol needing K-line, financial statements, F10, or
+            announcements -> use the stock_* tools.
         (b) Stock screening, ranking, cross-section comparison, macro, industry,
             or index queries -> use iwencai_query instead.
         (c) Keyword/topic search over news, research reports, or announcements,
-            including per-stock news -> use this tool with the matching channel.
+            including per-stock news and research reports -> use this tool with
+            the matching channel.
 
         Data source is 同花顺问财 (Iwencai); answers built on this data must credit
         同花顺问财. On first use of a channel, or when a search fails or returns
