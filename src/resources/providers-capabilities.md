@@ -19,6 +19,16 @@ Provider selection is static for a running process. Change environment variables
 - Sina: default A-share financial statements provider, using the `report_date` and `report_list` response shape.
 - cninfo: default A-share announcements provider.
 
+## Data Freshness
+
+Each source updates on its own schedule; do not assume consistent freshness across tools, and cross-validate time-sensitive data.
+
+- Tencent quote/profile: real-time trading-day snapshot.
+- mootdx K-line: real-time trading-day bars from 通达信 quote servers; F10 text follows company disclosures.
+- Sina financial statements: updated when the issuer publishes periodic reports (quarterly/annual).
+- cninfo announcements: near-real-time, as filed with the exchange.
+- Iwencai structured data (`iwencai_query`): follows disclosure updates (financials, shareholders, ratings). Iwencai search channels (`iwencai_search`): near-real-time indexing of news, research reports, and announcements.
+
 ## v1 Limitations
 
 - Hong Kong financial statements and announcements: unsupported_market in v1.

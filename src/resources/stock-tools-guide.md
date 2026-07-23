@@ -20,7 +20,7 @@ Parameters: `symbols` — a list of 1 to 40 symbols; A-share and Hong Kong symbo
 
 Coverage: A-shares and Hong Kong stocks use Tencent quote by default, fetched as a single batched request. Per-symbol failures do not fail the batch: invalid symbols and symbols the provider did not return are listed in `data.errors` (`invalid_symbol` / `symbol_not_found`), while successful entries are in `data.profiles`.
 
-Limitations: industry, listing date, total shares, and float shares may be `null` because the default Tencent quote provider does not reliably expose them. Tencent A-share volume is normalized from lots to shares, and amount is normalized from ten-thousand CNY units. Tencent Hong Kong amount is HKD when usable; Hong Kong turnover rate is `null` because no stable mapping is verified.
+Limitations: industry, listing date, total shares, and float shares may be `null` because the default Tencent quote provider does not reliably expose them. When you need industry classification, listing date, or share counts, query `iwencai_query` with the full company name (domain `management` for share structure, `finance`/`business` for industry context) instead. Tencent A-share volume is normalized from lots to shares, and amount is normalized from ten-thousand CNY units. Tencent Hong Kong amount is HKD when usable; Hong Kong turnover rate is `null` because no stable mapping is verified.
 
 ## stock_financial_statements
 
