@@ -32,15 +32,15 @@ Coverage: A-shares use Sina by default. Hong Kong symbols return `unsupported_ma
 
 Limitations: v1 preserves provider field codes and Chinese item titles instead of forcing a universal accounting taxonomy. Line items whose value is null upstream (for example insurance- or banking-only accounts on an industrial company) are dropped to keep responses compact.
 
-## stock_f10
+## stock_fundamental_snapshot
 
-Purpose: bounded A-share F10 text sections for research context.
+Purpose: one-call structured A-share fundamental snapshot for company analysis, covering seven dimensions: 商业模式/定位 (meta/profile), 业务结构 (business_composition), 估值快照 (quote_valuation), 盈利能力 (profitability), 成长性 (growth), 运营能力 (operations_solvency), 债务风险 (operations_solvency/balance_sheet_flags), plus shareholders.
 
-Parameters: `symbol`, `section` (`company_profile`, `latest_notice`, `shareholders`, `capital_structure`, `financial_analysis`), and positive `max_chars`.
+Parameters: `symbol`, optional `sections` (list of block names, default `["all"]`; one or more of `meta`, `profile`, `business_composition`, `quote_valuation`, `profitability`, `growth`, `operations_solvency`, `balance_sheet_flags`, `shareholders`), and `annual_years` (1-10, default 5) controlling the number of annual periods in `profitability`/`growth`.
 
-Coverage: A-shares use `eastmoney` by default (emweb.securities.eastmoney.com + datacenter-web + np-anotice-stock 公告接口). `mootdx` remains a configurable alternative via `AGENTEUM_FIN_F10_PROVIDER=mootdx`. Hong Kong symbols return `unsupported_market`.
+Sources: eastmoney F10 (profile/shareholders/capital/business composition, structured JSON), Tencent quote (price/market-cap/PE/PB), akshare (THS financial abstract incl. 扣非净利润, Sina balance sheet & income statement). Derived metrics (TTM, deducted PE, YoY, DuPont, liability ratio, interest-bearing debt, receivable days) are computed server-side. All amounts are in 亿元 CNY; ratios are percentages; `null` means the source did not disclose the field (no fabrication).
 
-Limitations: output is normalized text trimmed to `max_chars`; long sections (e.g. `shareholders`) may need a larger `max_chars` to render the latest 十大股东 / 十大流通股东 / 股东户数 / 实际控制人 in full. `financial_analysis` returns the latest 8 reporting periods only; for full 三表 detail use `stock_financial_statements`. `latest_notice` overlaps with `stock_announcements` but is retained as a quick disclosure summary within F10.
+Limitations: A-shares only for now — Hong Kong symbols do not error but return all blocks `null` with entries in `data.missing` pointing at wind-mcp as the interim path. Block-level degradation: a failing provider nulls only its dependent blocks and is reported in `data.missing` with the error; `data.providers` lists which providers backed each block; `data.notes` documents 口径 (TTM window, 扣非 preference,期末 ROE/ROA, simplified receivable days). Inherent gaps (customer concentration, volume-price split, market size, peer comparison, industry-chain position) are always listed in `data.missing` with hints. For full 三表 line items use `stock_financial_statements`; for disclosures use `stock_announcements`.
 
 ## stock_announcements
 

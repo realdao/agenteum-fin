@@ -2,10 +2,11 @@ import pytest
 from pydantic import ValidationError
 
 from src.schemas import (
+    SNAPSHOT_SECTIONS,
     ErrorDetail,
-    F10Request,
     FallbackRecord,
     FinancialStatementsRequest,
+    FundamentalSnapshotRequest,
     KlineBar,
     KlineRequest,
     KlineResponse,
@@ -40,9 +41,45 @@ def test_public_request_numeric_fields_must_be_positive():
     with pytest.raises(ValidationError):
         FinancialStatementsRequest(symbol="600519", periods=0)
     with pytest.raises(ValidationError):
-        F10Request(symbol="600519", max_chars=0)
+        FundamentalSnapshotRequest(symbol="600519", annual_years=0)
+    with pytest.raises(ValidationError):
+        FundamentalSnapshotRequest(symbol="600519", annual_years=11)
     with pytest.raises(ValidationError):
         PageSizeRequest(symbol="600519", page_size=0)
+
+
+def test_snapshot_request_defaults_to_all_sections():
+    request = FundamentalSnapshotRequest(symbol="600519")
+
+    assert request.sections == ["all"]
+    assert request.annual_years == 5
+
+
+def test_snapshot_request_rejects_unknown_sections():
+    with pytest.raises(ValidationError) as raised:
+        FundamentalSnapshotRequest(symbol="600519", sections=["meta", "bogus"])
+
+    assert "bogus" in str(raised.value)
+
+
+def test_snapshot_request_dedupes_sections():
+    request = FundamentalSnapshotRequest(
+        symbol="600519",
+        sections=["meta", "meta", "growth"],
+    )
+
+    assert request.sections == ["meta", "growth"]
+    assert set(SNAPSHOT_SECTIONS) == {
+        "meta",
+        "profile",
+        "business_composition",
+        "quote_valuation",
+        "profitability",
+        "growth",
+        "operations_solvency",
+        "balance_sheet_flags",
+        "shareholders",
+    }
 
 
 def test_kline_request_rejects_compact_dates():

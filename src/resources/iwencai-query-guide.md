@@ -6,7 +6,7 @@
 
 三层路由规则：
 
-- **已知 symbol，要 K 线 / 三表 / F10 / 公告** → 用 `stock_kline`、`stock_financial_statements`、`stock_f10`、`stock_announcements`。
+- **已知 symbol，要 K 线 / 三表 / 基本面快照 / 公告** → 用 `stock_kline`、`stock_financial_statements`、`stock_fundamental_snapshot`、`stock_announcements`。
 - **选股筛选、排名、跨截面比较、宏观、行业、指数** → 用 `iwencai_query`，按场景选择 domain。
 - **主题关键词搜资讯 / 研报 / 公告（含个股新闻、个股研报）** → 用 `iwencai_search`，按内容类型选择 channel；个股新闻用 `news` channel、个股研报用 `report` channel，query 带公司名或代码。
 

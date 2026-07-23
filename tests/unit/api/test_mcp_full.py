@@ -45,7 +45,7 @@ async def test_mcp_server_can_be_created_with_fake_services():
         kline_service=object(),
         profile_service=object(),
         financial_service=object(),
-        f10_service=object(),
+        snapshot_service=object(),
         announcement_service=object(),
     )
 
@@ -62,14 +62,9 @@ async def test_tool_schemas_advertise_closed_enums():
     assert kline_props["adjust"]["enum"] == ["none", "qfq", "hfq"]
     fin_props = tools["stock_financial_statements"].inputSchema["properties"]
     assert fin_props["statement_type"]["enum"] == ["balance_sheet", "income", "cash_flow", "all"]
-    f10_props = tools["stock_f10"].inputSchema["properties"]
-    assert f10_props["section"]["enum"] == [
-        "company_profile",
-        "latest_notice",
-        "shareholders",
-        "capital_structure",
-        "financial_analysis",
-    ]
+    assert "stock_f10" not in tools
+    snapshot_props = tools["stock_fundamental_snapshot"].inputSchema["properties"]
+    assert set(snapshot_props) == {"symbol", "sections", "annual_years"}
     query_props = tools["iwencai_query"].inputSchema["properties"]
     assert query_props["domain"]["enum"] == [
         "finance",
@@ -136,6 +131,98 @@ async def test_mcp_provider_errors_include_fallback_history():
     assert result["status"] == "error"
     assert result["error"]["type"] == "timeout"
     assert result["fallbacks"] == [{"from": "primary", "to": "fallback", "reason": "timeout"}]
+
+
+@pytest.mark.asyncio
+async def test_mcp_snapshot_validation_error_on_bad_annual_years():
+    mcp = create_mcp_server(snapshot_service=object())
+
+    result = _tool_result_data(
+        await mcp.call_tool(
+            "stock_fundamental_snapshot",
+            {"symbol": "600519", "annual_years": 0},
+        )
+    )
+
+    assert result["status"] == "error"
+    assert result["error"]["type"] == "invalid_request"
+    assert result["error"]["message"].startswith("Invalid parameter 'annual_years'")
+
+
+@pytest.mark.asyncio
+async def test_mcp_snapshot_validation_error_on_unknown_section():
+    mcp = create_mcp_server(snapshot_service=object())
+
+    result = _tool_result_data(
+        await mcp.call_tool(
+            "stock_fundamental_snapshot",
+            {"symbol": "600519", "sections": ["meta", "bogus"]},
+        )
+    )
+
+    assert result["status"] == "error"
+    assert result["error"]["type"] == "invalid_request"
+    assert result["error"]["message"].startswith("Invalid parameter 'sections'")
+    assert "bogus" in result["error"]["message"]
+
+
+@pytest.mark.asyncio
+async def test_mcp_snapshot_returns_service_envelope():
+    from src.schemas import FundamentalSnapshotData, FundamentalSnapshotResponse
+    from src.utils.symbols import normalize_symbol
+
+    class FakeSnapshotService:
+        def __init__(self):
+            self.requests = []
+
+        async def get_snapshot(self, request):
+            self.requests.append(request)
+            return FundamentalSnapshotResponse(
+                status="ok",
+                provider="multi",
+                provider_status="ok",
+                fetched_at="2026-07-23T00:00:00+00:00",
+                fallbacks=[],
+                data=FundamentalSnapshotData(
+                    symbol=normalize_symbol(request.symbol),
+                    notes=["note"],
+                ),
+            )
+
+    service = FakeSnapshotService()
+    mcp = create_mcp_server(snapshot_service=service)
+
+    result = _tool_result_data(
+        await mcp.call_tool("stock_fundamental_snapshot", {"symbol": "600519.SH"})
+    )
+
+    assert result["status"] == "ok"
+    assert result["provider"] == "multi"
+    assert result["data"]["symbol"]["display_symbol"] == "600519.SH"
+    assert result["data"]["notes"] == ["note"]
+    assert service.requests[0].sections == ["all"]
+    assert service.requests[0].annual_years == 5
+
+
+@pytest.mark.asyncio
+async def test_mcp_snapshot_provider_errors_return_structured_error():
+    class FailingSnapshotService:
+        async def get_snapshot(self, request):
+            raise ProviderError(
+                error_type=ErrorType.INVALID_SYMBOL,
+                provider=None,
+                message="Invalid stock symbol: bogus",
+            )
+
+    mcp = create_mcp_server(snapshot_service=FailingSnapshotService())
+
+    result = _tool_result_data(
+        await mcp.call_tool("stock_fundamental_snapshot", {"symbol": "bogus"})
+    )
+
+    assert result["status"] == "error"
+    assert result["error"]["type"] == "invalid_symbol"
+    assert result["fallbacks"] == []
 
 
 @pytest.mark.asyncio

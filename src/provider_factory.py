@@ -7,9 +7,9 @@ import httpx
 from src.config import Settings
 from src.errors import ErrorType, ProviderError
 from src.providers.announcements.cninfo import CninfoAnnouncementProvider
-from src.providers.f10.eastmoney_f10 import EastmoneyF10Provider
-from src.providers.f10.mootdx_f10 import MootdxF10Provider
 from src.providers.financials.sina import SinaFinancialStatementsProvider
+from src.providers.fundamental.akshare_financials import AkshareFinancialsProvider
+from src.providers.fundamental.eastmoney import EastmoneyFundamentalProvider
 from src.providers.iwencai.client import IwencaiClient
 from src.providers.market_data.mootdx_kline import MootdxKlineProvider
 from src.providers.market_data.tencent_kline import TencentKlineProvider
@@ -18,7 +18,9 @@ from src.services.announcement_service import AnnouncementService
 from src.services.financial_statement_service import FinancialStatementService
 from src.services.iwencai_service import IwencaiService
 from src.services.retry import RetryPolicy
-from src.services.stock_f10_service import StockF10Service
+from src.services.stock_fundamental_snapshot_service import (
+    StockFundamentalSnapshotService,
+)
 from src.services.stock_kline_service import StockKlineService
 from src.services.stock_profile_service import StockProfileService
 
@@ -29,7 +31,7 @@ class ServiceBundle:
     kline_service: StockKlineService
     profile_service: StockProfileService
     financial_service: FinancialStatementService
-    f10_service: StockF10Service
+    snapshot_service: StockFundamentalSnapshotService
     announcement_service: AnnouncementService
     iwencai_service: IwencaiService | None
 
@@ -38,13 +40,15 @@ def build_services(settings: Settings) -> ServiceBundle:
     http_client = httpx.AsyncClient(timeout=settings.fin_request_timeout)
     retry_policy = RetryPolicy.from_settings(settings)
 
+    quote_provider = _profile_provider(settings.fin_profile_provider, http_client)
+
     kline_service = StockKlineService(
         a_share_provider=_a_kline_provider(settings.fin_a_kline_provider, http_client),
         hk_provider=_hk_kline_provider(settings.fin_hk_kline_provider, http_client),
         retry_policy=retry_policy,
     )
     profile_service = StockProfileService(
-        providers=[_profile_provider(settings.fin_profile_provider, http_client)],
+        providers=[quote_provider],
         retry_policy=retry_policy,
     )
     financial_service = FinancialStatementService(
@@ -54,8 +58,16 @@ def build_services(settings: Settings) -> ServiceBundle:
         ),
         retry_policy=retry_policy,
     )
-    f10_service = StockF10Service(
-        provider=_f10_provider(settings.fin_f10_provider, http_client),
+    snapshot_service = StockFundamentalSnapshotService(
+        profile_provider=_fundamental_profile_provider(
+            settings.fin_fundamental_profile_provider,
+            http_client,
+        ),
+        financials_provider=_fundamental_financials_provider(
+            settings.fin_fundamental_financials_provider,
+        ),
+        # 与 stock_profile 复用同一个腾讯行情 provider 实例（无状态，仅持有 httpx client）。
+        quote_provider=quote_provider,
         retry_policy=retry_policy,
     )
     announcement_service = AnnouncementService(
@@ -69,7 +81,7 @@ def build_services(settings: Settings) -> ServiceBundle:
         kline_service=kline_service,
         profile_service=profile_service,
         financial_service=financial_service,
-        f10_service=f10_service,
+        snapshot_service=snapshot_service,
         announcement_service=announcement_service,
         iwencai_service=iwencai_service,
     )
@@ -105,14 +117,20 @@ def _financial_provider(provider_name: str, client: httpx.AsyncClient):
     raise _unknown_provider("financial_statements", provider_name)
 
 
-def _f10_provider(provider_name: str, client: httpx.AsyncClient):
+def _fundamental_profile_provider(provider_name: str, client: httpx.AsyncClient):
     if provider_name == "eastmoney":
-        return EastmoneyF10Provider(client=client)
-    if provider_name == "mootdx":
-        return MootdxF10Provider()
+        return EastmoneyFundamentalProvider(client=client)
     if provider_name == "none":
         return None
-    raise _unknown_provider("f10", provider_name)
+    raise _unknown_provider("fundamental_profile", provider_name)
+
+
+def _fundamental_financials_provider(provider_name: str):
+    if provider_name == "akshare":
+        return AkshareFinancialsProvider()
+    if provider_name == "none":
+        return None
+    raise _unknown_provider("fundamental_financials", provider_name)
 
 
 def _announcement_provider(provider_name: str, client: httpx.AsyncClient):

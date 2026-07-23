@@ -52,4 +52,6 @@ The service runs `agenteum-fin` from the project venv as the invoking user (or a
 
 Provider selection is static for a running process. Change `.env`, then restart the server.
 
-`mootdx` (default A-share K-line and F10 provider) is a declared dependency. Its PyPI metadata pins `httpx<0.26`, which conflicts with the MCP SDK, so `pyproject.toml` carries a `tool.uv` override forcing `httpx>=0.28` — install with `uv sync` (plain `pip install` cannot resolve this). mootdx reaches 通达信 quote servers over TCP and needs a stable route to mainland-China IPs.
+`mootdx` (optional A-share K-line provider) is a declared dependency. Its PyPI metadata pins `httpx<0.26`, which conflicts with the MCP SDK, so `pyproject.toml` carries a `tool.uv` override forcing `httpx>=0.28` — install with `uv sync` (plain `pip install` cannot resolve this). mootdx reaches 通达信 quote servers over TCP and needs a stable route to mainland-China IPs.
+
+`akshare` powers the financial blocks of `stock_fundamental_snapshot` (THS financial abstract and Sina statements). It is synchronous and requests-based; the server wraps its calls in a thread pool.

@@ -17,7 +17,8 @@ def test_settings_defaults_match_spec(monkeypatch):
         "AGENTEUM_FIN_HK_KLINE_PROVIDER",
         "AGENTEUM_FIN_PROFILE_PROVIDER",
         "AGENTEUM_FIN_FINANCIAL_STATEMENTS_PROVIDER",
-        "AGENTEUM_FIN_F10_PROVIDER",
+        "AGENTEUM_FIN_FUNDAMENTAL_PROFILE_PROVIDER",
+        "AGENTEUM_FIN_FUNDAMENTAL_FINANCIALS_PROVIDER",
         "AGENTEUM_FIN_ANNOUNCEMENTS_PROVIDER",
         "AGENTEUM_FIN_IWENCAI_PROVIDER",
     ):
@@ -33,7 +34,8 @@ def test_settings_defaults_match_spec(monkeypatch):
     assert settings.fin_hk_kline_provider == "tencent"
     assert settings.fin_profile_provider == "tencent"
     assert settings.fin_financial_statements_provider == "sina"
-    assert settings.fin_f10_provider == "eastmoney"
+    assert settings.fin_fundamental_profile_provider == "eastmoney"
+    assert settings.fin_fundamental_financials_provider == "akshare"
     assert settings.fin_announcements_provider == "cninfo"
     assert settings.fin_iwencai_provider == "iwencai"
 

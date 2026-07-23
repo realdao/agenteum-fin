@@ -33,7 +33,14 @@ class Settings(BaseSettings):
         default="sina",
         alias="AGENTEUM_FIN_FINANCIAL_STATEMENTS_PROVIDER",
     )
-    fin_f10_provider: str = Field(default="eastmoney", alias="AGENTEUM_FIN_F10_PROVIDER")
+    fin_fundamental_profile_provider: str = Field(
+        default="eastmoney",
+        alias="AGENTEUM_FIN_FUNDAMENTAL_PROFILE_PROVIDER",
+    )
+    fin_fundamental_financials_provider: str = Field(
+        default="akshare",
+        alias="AGENTEUM_FIN_FUNDAMENTAL_FINANCIALS_PROVIDER",
+    )
     fin_announcements_provider: str = Field(
         default="cninfo",
         alias="AGENTEUM_FIN_ANNOUNCEMENTS_PROVIDER",

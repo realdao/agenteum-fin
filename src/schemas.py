@@ -176,33 +176,202 @@ class FinancialStatementsResponse(BaseToolResponse):
     data: FinancialStatementsData
 
 
-class F10Request(BaseModel):
+# stock_fundamental_snapshot 的可选 block 名；"all" 表示全部 block。
+SNAPSHOT_SECTIONS = (
+    "meta",
+    "profile",
+    "business_composition",
+    "quote_valuation",
+    "profitability",
+    "growth",
+    "operations_solvency",
+    "balance_sheet_flags",
+    "shareholders",
+)
+
+
+class FundamentalSnapshotRequest(BaseModel):
     symbol: str
-    section: Literal[
-        "company_profile",
-        "latest_notice",
-        "shareholders",
-        "capital_structure",
-        "financial_analysis",
-    ] = "company_profile"
-    max_chars: int = Field(default=4000, gt=0)
+    sections: list[str] = Field(default_factory=lambda: ["all"])
+    annual_years: int = Field(default=5, gt=0, le=10)
+
+    @field_validator("sections")
+    @classmethod
+    def validate_sections(cls, value: list[str]) -> list[str]:
+        if not value:
+            raise ValueError("sections must not be empty")
+        deduped = list(dict.fromkeys(value))
+        invalid = [section for section in deduped if section not in (*SNAPSHOT_SECTIONS, "all")]
+        if invalid:
+            raise ValueError(
+                f"invalid sections {invalid}; "
+                f"valid values are 'all' or one of {list(SNAPSHOT_SECTIONS)}"
+            )
+        return deduped
+
+
+class SnapshotMeta(BaseModel):
+    name: str | None = None
+    full_name: str | None = None
+    market: str | None = None
+    exchange: str | None = None
+    industry_sw: str | None = None
+    industry_csrc: str | None = None
+    currency: str | None = None
+    listing_date: str | None = None
+    total_shares: float | None = None
+    float_shares: float | None = None
+    limited_shares: float | None = None
+
+
+class SnapshotProfile(BaseModel):
+    introduction: str | None = None
+    business_scope: str | None = None
+    founded_date: str | None = None
+    listing_date: str | None = None
+    chairman: str | None = None
+    president: str | None = None
+    secretary: str | None = None
+    legal_person: str | None = None
+    employees: float | None = None
+    reg_address: str | None = None
+    office_address: str | None = None
+    website: str | None = None
+    controller: str | None = None
+    controller_ratio_pct: float | None = None
+
+
+class BusinessCompositionItem(BaseModel):
+    name: str | None = None
+    revenue_yi: float | None = None
+    cost_yi: float | None = None
+    gross_profit_yi: float | None = None
+    gross_margin_pct: float | None = None
+    revenue_pct: float | None = None
+
+
+class BusinessComposition(BaseModel):
+    period: str | None = None
+    by_industry: list[BusinessCompositionItem] = Field(default_factory=list)
+    by_product: list[BusinessCompositionItem] = Field(default_factory=list)
+    by_region: list[BusinessCompositionItem] = Field(default_factory=list)
+
+
+class QuoteValuation(BaseModel):
+    price: float | None = None
+    market_cap_yi: float | None = None
+    float_market_cap_yi: float | None = None
+    pe_ttm: float | None = None
+    pe_static: float | None = None
+    pb: float | None = None
+    ttm_revenue_yi: float | None = None
+    ttm_net_profit_yi: float | None = None
+    ttm_deducted_net_profit_yi: float | None = None
+    pe_ttm_calculated: float | None = None
+    pe_ttm_deducted: float | None = None
+    ps_ttm: float | None = None
+
+
+class ProfitabilityPeriod(BaseModel):
+    period: str
+    revenue_yi: float | None = None
+    net_profit_yi: float | None = None
+    deducted_net_profit_yi: float | None = None
+    operating_cash_flow_yi: float | None = None
+    gross_margin_pct: float | None = None
+    net_margin_pct: float | None = None
+    roe_pct: float | None = None
+    roa_pct: float | None = None
+    asset_turnover: float | None = None
+    equity_multiplier: float | None = None
+    goodwill_yi: float | None = None
+
+
+class Profitability(BaseModel):
+    annual: list[ProfitabilityPeriod] = Field(default_factory=list)
+    latest_quarter: ProfitabilityPeriod | None = None
+
+
+class GrowthPeriod(BaseModel):
+    period: str
+    revenue_yoy_pct: float | None = None
+    net_profit_yoy_pct: float | None = None
+    deducted_net_profit_yoy_pct: float | None = None
+
+
+class OperationsSolvencyPeriod(BaseModel):
+    period: str
+    cash_yi: float | None = None
+    trading_financial_assets_yi: float | None = None
+    accounts_receivable_yi: float | None = None
+    inventory_yi: float | None = None
+    receivable_days_simple: float | None = None
+    liability_ratio_pct: float | None = None
+    current_ratio: float | None = None
+    interest_bearing_debt_yi: float | None = None
+    goodwill_yi: float | None = None
+    long_term_equity_investment_yi: float | None = None
+
+
+class BalanceSheetFlags(BaseModel):
+    interest_bearing_debt_yi: float | None = None
+    trading_financial_assets_yi: float | None = None
+    goodwill_yi: float | None = None
+    long_term_equity_investment_yi: float | None = None
+    investment_income_yi: float | None = None
+    fair_value_gain_yi: float | None = None
+    fair_value_gain_to_net_profit: float | None = None
+
+
+class ShareholderItem(BaseModel):
+    rank: int | None = None
+    name: str | None = None
+    holder_type: str | None = None
+    shares: float | None = None
+    ratio_pct: float | None = None
+    change_shares: float | None = None
+
+
+class Shareholders(BaseModel):
+    holder_count: float | None = None
+    holder_count_date: str | None = None
+    holder_count_change_pct: float | None = None
+    controller: str | None = None
+    controller_ratio_pct: float | None = None
+    top10_date: str | None = None
+    top10: list[ShareholderItem] = Field(default_factory=list)
+    top10_float: list[ShareholderItem] = Field(default_factory=list)
+
+
+class MissingItem(BaseModel):
+    item: str
+    reason: str
+    hint: str | None = None
+
+
+class FundamentalSnapshotData(BaseModel):
+    symbol: NormalizedSymbol
+    meta: SnapshotMeta | None = None
+    profile: SnapshotProfile | None = None
+    business_composition: BusinessComposition | None = None
+    quote_valuation: QuoteValuation | None = None
+    profitability: Profitability | None = None
+    growth: list[GrowthPeriod] | None = None
+    operations_solvency: list[OperationsSolvencyPeriod] | None = None
+    balance_sheet_flags: BalanceSheetFlags | None = None
+    shareholders: Shareholders | None = None
+    providers: dict[str, list[str]] = Field(default_factory=dict)
+    missing: list[MissingItem] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
+
+
+class FundamentalSnapshotResponse(BaseToolResponse):
+    data: FundamentalSnapshotData
 
 
 class PageSizeRequest(BaseModel):
     symbol: str
     page_size: int = Field(default=20, gt=0)
-
-
-class F10Data(BaseModel):
-    symbol: NormalizedSymbol
-    section: str
-    provider_section: str
-    text: str
-    truncated: bool
-
-
-class F10Response(BaseToolResponse):
-    data: F10Data
 
 
 class AnnouncementItem(BaseModel):

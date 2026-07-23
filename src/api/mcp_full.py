@@ -10,9 +10,9 @@ from src.errors import ErrorType, ProviderError, is_recoverable
 from src.resources.tool_guides import RESOURCE_URIS, resource_text_by_uri
 from src.schemas import (
     ErrorDetail,
-    F10Request,
     FallbackRecord,
     FinancialStatementsRequest,
+    FundamentalSnapshotRequest,
     IwencaiChannel,
     IwencaiDomain,
     IwencaiQueryRequest,
@@ -38,7 +38,7 @@ def create_mcp_server(
     kline_service: Any | None = None,
     profile_service: Any | None = None,
     financial_service: Any | None = None,
-    f10_service: Any | None = None,
+    snapshot_service: Any | None = None,
     announcement_service: Any | None = None,
     iwencai_service: Any | None = None,
     allow_remote: bool = False,
@@ -138,22 +138,48 @@ def create_mcp_server(
             return _validation_error_response(exc).model_dump(by_alias=True)
 
     @mcp.tool()
-    async def stock_f10(
+    async def stock_fundamental_snapshot(
         symbol: str,
-        section: Annotated[
-            str,
-            Field(json_schema_extra={"enum": _enum_values(F10Request, "section")}),
-        ] = "company_profile",
-        max_chars: int = 4000,
+        sections: Annotated[
+            list[str] | None,
+            Field(
+                description=(
+                    "按需裁剪的 block 列表，默认 ['all'] 返回全部。可选值："
+                    "meta（基本资料/行业/股本）、profile（简介/经营范围/高管/实控人）、"
+                    "business_composition（按行业/产品/地区的主营构成）、"
+                    "quote_valuation（行情估值快照，含 TTM/扣非 PE/PS 自算）、"
+                    "profitability（年报+最新季报的营收/归母/扣非/OCF/利润率/ROE/ROA/DuPont）、"
+                    "growth（营收/归母/扣非逐年同比）、"
+                    "operations_solvency（货币资金/应收/存货/负债率/流动比率/有息负债）、"
+                    "balance_sheet_flags（投资收益/公允价值变动/商誉等清洁度信号）、"
+                    "shareholders（股东户数/实控人/十大股东）"
+                ),
+            ),
+        ] = None,
+        annual_years: Annotated[
+            int,
+            Field(description="年报期数（1-10），默认 5，用于 profitability/growth 块"),
+        ] = 5,
     ) -> dict:
-        """Return bounded A-share F10 text sections."""
+        """Return a structured A-share fundamental snapshot in one call.
+
+        Aggregates company profile, business composition, quote & valuation
+        (with server-computed TTM / deducted PE / PS), profitability, growth,
+        operations & solvency, balance-sheet flags, and shareholders. All
+        amounts are in 亿元 (CNY); null means the data source did not disclose
+        the field. Block-level degradation: a failing provider only nulls the
+        blocks that depend on it and is reported in data.missing; Hong Kong
+        symbols are not supported yet and return all blocks in data.missing
+        with a hint. Use stock_financial_statements for raw statement line
+        items and stock_announcements for disclosures.
+        """
         try:
-            request = F10Request(symbol=symbol, section=section, max_chars=max_chars)
-            response = await f10_service.get_f10(
-                request.symbol,
-                section=request.section,
-                max_chars=request.max_chars,
+            request = FundamentalSnapshotRequest(
+                symbol=symbol,
+                sections=sections or ["all"],
+                annual_years=annual_years,
             )
+            response = await snapshot_service.get_snapshot(request)
             return response.model_dump(by_alias=True)
         except ProviderError as exc:
             return _provider_error_response(exc).model_dump(by_alias=True)
@@ -221,8 +247,8 @@ def create_mcp_server(
         """Query THS Iwencai (同花顺问财) structured data by natural language.
 
         Tool routing rules:
-        (a) Known symbol needing K-line, financial statements, F10, or
-            announcements -> use the stock_* tools.
+        (a) Known symbol needing K-line, financial statements, fundamental
+            snapshot, or announcements -> use the stock_* tools.
         (b) Stock screening, ranking, cross-section comparison, macro, industry,
             or index queries -> use this tool with the matching domain.
         (c) Keyword search over news / research reports / announcements,
@@ -288,8 +314,8 @@ def create_mcp_server(
         """Search THS Iwencai (同花顺问财) news, research reports, or announcements.
 
         Tool routing rules:
-        (a) Known symbol needing K-line, financial statements, F10, or
-            announcements -> use the stock_* tools.
+        (a) Known symbol needing K-line, financial statements, fundamental
+            snapshot, or announcements -> use the stock_* tools.
         (b) Stock screening, ranking, cross-section comparison, macro, industry,
             or index queries -> use iwencai_query instead.
         (c) Keyword/topic search over news, research reports, or announcements,
