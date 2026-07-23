@@ -8,9 +8,9 @@ Purpose: daily and higher-period OHLCV bars.
 
 Parameters: `symbol`, `period` (`day`, `week`, `month`, `quarter`, `year`), optional `start_date`, optional `end_date`, `adjust` (`none`, `qfq`, `hfq`), and optional positive `limit`.
 
-Coverage: A-shares use the configured A-share K-line provider, default `mootdx`. Hong Kong K-line uses the configured Hong Kong provider, default `tencent` (fqkline), supporting `day`/`week`/`month` periods.
+Coverage: A-shares and Hong Kong K-line both use the configured provider, default `tencent` (fqkline, web.ifzq.gtimg.cn), supporting `day`/`week`/`month` periods. `mootdx` remains available as a backup A-share provider via `AGENTEUM_FIN_A_KLINE_PROVIDER=mootdx`, supporting `day`/`week`/`month`/`quarter`/`year`.
 
-Limitations: v1 does not calculate technical indicators. Adjusted K-line modes `qfq` and `hfq` return `unsupported_adjustment` for the default A-share provider but are supported by the default Hong Kong provider. Tencent Hong Kong bars do not expose `amount`.
+Limitations: v1 does not calculate technical indicators. Default `tencent` provider does not support `quarter` and `year` periods (returns `unsupported_period`) and bars expose `volume` but not `amount`. 北交所（`bj*`）codes are not well supported by the default tencent provider. mootdx alternative supports `quarter`/`year` and `amount`, but only `adjust=none`.
 
 ## stock_profile
 
@@ -38,9 +38,9 @@ Purpose: bounded A-share F10 text sections for research context.
 
 Parameters: `symbol`, `section` (`company_profile`, `latest_notice`, `shareholders`, `capital_structure`, `financial_analysis`), and positive `max_chars`.
 
-Coverage: A-shares use `mootdx` by default. Hong Kong symbols return `unsupported_market`.
+Coverage: A-shares use `eastmoney` by default (emweb.securities.eastmoney.com + datacenter-web + np-anotice-stock 公告接口). `mootdx` remains a configurable alternative via `AGENTEUM_FIN_F10_PROVIDER=mootdx`. Hong Kong symbols return `unsupported_market`.
 
-Limitations: output is raw provider text trimmed to `max_chars`; use `truncated` to decide whether to ask for a larger slice.
+Limitations: output is normalized text trimmed to `max_chars`; long sections (e.g. `shareholders`) may need a larger `max_chars` to render the latest 十大股东 / 十大流通股东 / 股东户数 / 实际控制人 in full. `financial_analysis` returns the latest 8 reporting periods only; for full 三表 detail use `stock_financial_statements`. `latest_notice` overlaps with `stock_announcements` but is retained as a quick disclosure summary within F10.
 
 ## stock_announcements
 

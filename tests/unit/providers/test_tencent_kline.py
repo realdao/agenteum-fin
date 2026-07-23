@@ -14,9 +14,9 @@ ROWS = [
 ]
 
 
-def payload(rows=ROWS, *, key="day", code=0, msg=""):
+def payload(rows=ROWS, *, key="day", code=0, msg="", query="hk00700"):
     return json.dumps(
-        {"code": code, "msg": msg, "data": {"hk00700": {key: rows}}}
+        {"code": code, "msg": msg, "data": {query: {key: rows}}}
     ).encode()
 
 
@@ -112,3 +112,33 @@ async def test_tencent_hk_kline_applies_date_filters():
     )
 
     assert [bar.date for bar in data.bars] == ["2026-07-21"]
+
+
+@pytest.mark.asyncio
+async def test_tencent_a_share_kline_uses_exchange_prefixed_query_symbol():
+    async def handler(request: httpx.Request) -> httpx.Response:
+        assert "sh600519" in str(request.url)
+        return httpx.Response(200, content=payload(query="sh600519"))
+
+    provider = make_provider(handler)
+    data = await provider.get_kline(normalize_symbol("600519"), KlineRequest(symbol="600519"))
+
+    assert data.symbol.market == "a_share"
+    assert data.symbol.exchange == "sh"
+    assert [bar.date for bar in data.bars] == ["2026-07-20", "2026-07-21"]
+    assert data.bars[0].amount is None
+
+
+@pytest.mark.asyncio
+async def test_tencent_a_share_kline_matches_qfq_key_suffix():
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=payload(key="qfqday", query="sz000001"))
+
+    provider = make_provider(handler)
+    data = await provider.get_kline(
+        normalize_symbol("sz000001"),
+        KlineRequest(symbol="000001", adjust="qfq"),
+    )
+
+    assert len(data.bars) == 2
+    assert data.adjust == "qfq"

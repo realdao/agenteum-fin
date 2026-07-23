@@ -29,11 +29,11 @@ def test_settings_defaults_match_spec(monkeypatch):
     assert settings.allow_remote is False
     assert settings.fin_request_timeout == 15.0
     assert settings.fin_retry_attempts == 1
-    assert settings.fin_a_kline_provider == "mootdx"
+    assert settings.fin_a_kline_provider == "tencent"
     assert settings.fin_hk_kline_provider == "tencent"
     assert settings.fin_profile_provider == "tencent"
     assert settings.fin_financial_statements_provider == "sina"
-    assert settings.fin_f10_provider == "mootdx"
+    assert settings.fin_f10_provider == "eastmoney"
     assert settings.fin_announcements_provider == "cninfo"
     assert settings.fin_iwencai_provider == "iwencai"
 

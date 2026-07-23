@@ -26,14 +26,14 @@ class Settings(BaseSettings):
         default=0.5,
         alias="AGENTEUM_FIN_RETRY_BACKOFF_SECONDS",
     )
-    fin_a_kline_provider: str = Field(default="mootdx", alias="AGENTEUM_FIN_A_KLINE_PROVIDER")
+    fin_a_kline_provider: str = Field(default="tencent", alias="AGENTEUM_FIN_A_KLINE_PROVIDER")
     fin_hk_kline_provider: str = Field(default="tencent", alias="AGENTEUM_FIN_HK_KLINE_PROVIDER")
     fin_profile_provider: str = Field(default="tencent", alias="AGENTEUM_FIN_PROFILE_PROVIDER")
     fin_financial_statements_provider: str = Field(
         default="sina",
         alias="AGENTEUM_FIN_FINANCIAL_STATEMENTS_PROVIDER",
     )
-    fin_f10_provider: str = Field(default="mootdx", alias="AGENTEUM_FIN_F10_PROVIDER")
+    fin_f10_provider: str = Field(default="eastmoney", alias="AGENTEUM_FIN_F10_PROVIDER")
     fin_announcements_provider: str = Field(
         default="cninfo",
         alias="AGENTEUM_FIN_ANNOUNCEMENTS_PROVIDER",

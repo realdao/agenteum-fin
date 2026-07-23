@@ -7,6 +7,7 @@ import httpx
 from src.config import Settings
 from src.errors import ErrorType, ProviderError
 from src.providers.announcements.cninfo import CninfoAnnouncementProvider
+from src.providers.f10.eastmoney_f10 import EastmoneyF10Provider
 from src.providers.f10.mootdx_f10 import MootdxF10Provider
 from src.providers.financials.sina import SinaFinancialStatementsProvider
 from src.providers.iwencai.client import IwencaiClient
@@ -38,7 +39,7 @@ def build_services(settings: Settings) -> ServiceBundle:
     retry_policy = RetryPolicy.from_settings(settings)
 
     kline_service = StockKlineService(
-        a_share_provider=_a_kline_provider(settings.fin_a_kline_provider),
+        a_share_provider=_a_kline_provider(settings.fin_a_kline_provider, http_client),
         hk_provider=_hk_kline_provider(settings.fin_hk_kline_provider, http_client),
         retry_policy=retry_policy,
     )
@@ -54,7 +55,7 @@ def build_services(settings: Settings) -> ServiceBundle:
         retry_policy=retry_policy,
     )
     f10_service = StockF10Service(
-        provider=_f10_provider(settings.fin_f10_provider),
+        provider=_f10_provider(settings.fin_f10_provider, http_client),
         retry_policy=retry_policy,
     )
     announcement_service = AnnouncementService(
@@ -74,9 +75,11 @@ def build_services(settings: Settings) -> ServiceBundle:
     )
 
 
-def _a_kline_provider(provider_name: str):
+def _a_kline_provider(provider_name: str, client: httpx.AsyncClient):
     if provider_name == "mootdx":
         return MootdxKlineProvider()
+    if provider_name == "tencent":
+        return TencentKlineProvider(client=client)
     if provider_name == "none":
         return None
     raise _unknown_provider("a_kline", provider_name)
@@ -102,7 +105,9 @@ def _financial_provider(provider_name: str, client: httpx.AsyncClient):
     raise _unknown_provider("financial_statements", provider_name)
 
 
-def _f10_provider(provider_name: str):
+def _f10_provider(provider_name: str, client: httpx.AsyncClient):
+    if provider_name == "eastmoney":
+        return EastmoneyF10Provider(client=client)
     if provider_name == "mootdx":
         return MootdxF10Provider()
     if provider_name == "none":
