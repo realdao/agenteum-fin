@@ -161,17 +161,19 @@ def create_mcp_server(
             Field(description="年报期数（1-10），默认 5，用于 profitability/growth 块"),
         ] = 5,
     ) -> dict:
-        """Return a structured A-share fundamental snapshot in one call.
+        """Return a structured fundamental snapshot for an A-share or HK stock.
 
         Aggregates company profile, business composition, quote & valuation
         (with server-computed TTM / deducted PE / PS), profitability, growth,
-        operations & solvency, balance-sheet flags, and shareholders. All
-        amounts are in 亿元 (CNY); null means the data source did not disclose
-        the field. Block-level degradation: a failing provider only nulls the
-        blocks that depend on it and is reported in data.missing; Hong Kong
-        symbols are not supported yet and return all blocks in data.missing
-        with a hint. Use stock_financial_statements for raw statement line
-        items and stock_announcements for disclosures.
+        operations & solvency, balance-sheet flags, and shareholders. Amounts
+        are in 亿元 (CNY for A-shares, HKD for Hong Kong); null means the data
+        source did not disclose the field. Block-level degradation: a failing
+        provider only nulls the blocks that depend on it and is reported in
+        data.missing. Hong Kong caveats: no deducted-profit caliber, no
+        structured business composition (in data.missing with a wind-mcp
+        hint), IFRS line items, and no holder count — see data.notes for
+        calibers. Use stock_financial_statements for raw A-share statement
+        line items and stock_announcements for disclosures.
         """
         try:
             request = FundamentalSnapshotRequest(

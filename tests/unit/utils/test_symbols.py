@@ -33,6 +33,12 @@ def test_normalizes_hong_kong_variants():
     assert normalize_symbol("00700.HK").display_symbol == "00700.HK"
 
 
+def test_explicit_hk_symbol_is_zero_padded_to_five_digits():
+    assert normalize_symbol("700.HK").display_symbol == "00700.HK"
+    assert normalize_symbol("HK700").display_symbol == "00700.HK"
+    assert normalize_symbol("hk0700").display_symbol == "00700.HK"
+
+
 def test_rejects_explicit_hk_with_six_digit_symbol():
     with pytest.raises(ProviderError) as raised:
         normalize_symbol("000001.HK")

@@ -394,41 +394,298 @@ async def test_unconfigured_providers_degrade_all_blocks():
     assert all("provider_unavailable" in item.reason for item in failed.values())
 
 
-@pytest.mark.asyncio
-async def test_hk_symbol_returns_degraded_snapshot_without_calling_providers():
-    profile_provider = _FakeProvider("eastmoney", {})
-    financials_provider = _FakeProvider("akshare", {})
-    quote_provider = _FakeProvider("tencent", {})
-    service = StockFundamentalSnapshotService(
-        profile_provider=profile_provider,
-        financials_provider=financials_provider,
-        quote_provider=quote_provider,
+# ---------------------------------------------------------------------- 港股
+
+HK_INDICATORS_ANNUAL = [
+    {
+        "REPORT_DATE": "2025-12-31 00:00:00",
+        "OPERATE_INCOME": 7500e8,
+        "OPERATE_INCOME_YOY": 13.86,
+        "HOLDER_PROFIT": 2250e8,
+        "HOLDER_PROFIT_YOY": 15.85,
+        "GROSS_PROFIT_RATIO": 56.21,
+        "NET_PROFIT_RATIO": 30.57,
+        "ROE_AVG": 21.13,
+        "ROA": 11.77,
+    },
+    {
+        "REPORT_DATE": "2024-12-31 00:00:00",
+        "OPERATE_INCOME": 6600e8,
+        "OPERATE_INCOME_YOY": 8.41,
+        "HOLDER_PROFIT": 1940e8,
+        "HOLDER_PROFIT_YOY": 68.44,
+        "GROSS_PROFIT_RATIO": 52.9,
+        "NET_PROFIT_RATIO": 29.76,
+        "ROE_AVG": 21.78,
+        "ROA": 11.56,
+    },
+]
+
+HK_INDICATORS_REPORT = [
+    {
+        "REPORT_DATE": "2026-03-31 00:00:00",
+        "OPERATE_INCOME": 1960e8,
+        "OPERATE_INCOME_YOY": 9.13,
+        "HOLDER_PROFIT": 581e8,
+        "HOLDER_PROFIT_YOY": 21.48,
+        "GROSS_PROFIT_RATIO": 56.64,
+        "NET_PROFIT_RATIO": 30.23,
+        "ROE_AVG": 5.09,
+        "ROA": 2.84,
+    },
+    HK_INDICATORS_ANNUAL[0],
+    {
+        "REPORT_DATE": "2025-03-31 00:00:00",
+        "OPERATE_INCOME": 1800e8,
+        "HOLDER_PROFIT": 478e8,
+    },
+]
+
+
+def _hk_bs_rows(period: str, scale: float = 1.0) -> list[dict]:
+    items = {
+        "总资产": 19000e8,
+        "总负债": 7400e8,
+        "股东权益": 10800e8,
+        "流动资产合计": 6000e8,
+        "流动负债合计": 4000e8,
+        "现金及等价物": 2500e8,
+        "应收帐款": 500e8,
+        "存货": 30e8,
+        "短期贷款": 400e8,
+        "长期贷款": 1500e8,
+        "融资租赁负债(流动)": 30e8,
+        "融资租赁负债(非流动)": 120e8,
+        "联营公司权益": 2600e8,
+        "合营公司权益": 100e8,
+    }
+    return [
+        {"REPORT_DATE": period, "STD_ITEM_NAME": name, "AMOUNT": value * scale}
+        for name, value in items.items()
+    ]
+
+
+HK_BS_ANNUAL = [
+    *_hk_bs_rows("2025-12-31 00:00:00"),
+    *_hk_bs_rows("2024-12-31 00:00:00", scale=0.8),
+]
+HK_BS_REPORT = _hk_bs_rows("2026-03-31 00:00:00", scale=1.05)
+HK_CF_ANNUAL = [
+    {"REPORT_DATE": "2025-12-31 00:00:00", "STD_ITEM_NAME": "经营业务现金净额", "AMOUNT": 3030e8},
+    {"REPORT_DATE": "2024-12-31 00:00:00", "STD_ITEM_NAME": "经营业务现金净额", "AMOUNT": 2585e8},
+]
+HK_INC_ANNUAL = [
+    {"REPORT_DATE": "2025-12-31 00:00:00", "STD_ITEM_NAME": "应占联营公司溢利", "AMOUNT": 250e8},
+    {"REPORT_DATE": "2025-12-31 00:00:00", "STD_ITEM_NAME": "应占合营公司溢利", "AMOUNT": 5e8},
+]
+
+
+def _hk_company_info():
+    from src.providers.fundamental.akshare_financials import HKCompanyInfo
+
+    return HKCompanyInfo(
+        name="腾讯控股",
+        full_name="腾讯控股有限公司",
+        industry="软件服务",
+        chairman="马化腾",
+        secretary="刘淑仪",
+        employees=87412,
+        office_address="香港湾仔皇后大道东1号太古广场三座29楼",
+        website="www.tencent.com",
+        auditor="罗兵咸永道会计师事务所",
+        introduction="腾讯控股有限公司是一家世界领先的互联网科技公司。",
+        founded_date="1999-11-23",
+        listing_date="2004-06-16",
+        exchange="香港交易所",
+        board="主板",
     )
 
-    response = await service.get_snapshot(FundamentalSnapshotRequest(symbol="00700.HK"))
+
+def _hk_quote() -> StockProfileData:
+    return StockProfileData(
+        symbol=normalize_symbol("00700.HK"),
+        name="腾讯控股",
+        price=445.2,
+        market_cap=40500e8,
+        float_market_cap=40500e8,
+        pe_ttm=16.26,
+        pb=3.22,
+        currency="HKD",
+    )
+
+
+def _hk_shareholders() -> Shareholders:
+    return Shareholders(
+        top10_date="2025-12-31",
+        top10=[
+            ShareholderItem(
+                rank=1,
+                name="MIH Internet Holdings B.V.",
+                holder_type="股东",
+                shares=2079512000,
+                ratio_pct=22.8,
+            ),
+            ShareholderItem(
+                rank=2,
+                name="马化腾",
+                holder_type="董事",
+                shares=804859700,
+                ratio_pct=8.83,
+            ),
+        ],
+    )
+
+
+def _hk_service(**overrides) -> StockFundamentalSnapshotService:
+    providers = {
+        "profile_provider": _FakeProvider(
+            "eastmoney",
+            {
+                "get_hk_share_structure": CapitalStructure(total_shares=9092516289),
+                "get_hk_major_holders": _hk_shareholders(),
+            },
+        ),
+        "financials_provider": _FakeProvider(
+            "akshare",
+            {
+                "get_hk_company_info": _hk_company_info(),
+                "get_hk_main_indicators_annual": HK_INDICATORS_ANNUAL,
+                "get_hk_main_indicators_report": HK_INDICATORS_REPORT,
+                "get_hk_balance_sheet_annual": HK_BS_ANNUAL,
+                "get_hk_balance_sheet_report": HK_BS_REPORT,
+                "get_hk_cash_flow_annual": HK_CF_ANNUAL,
+                "get_hk_income_statement_annual": HK_INC_ANNUAL,
+            },
+        ),
+        "quote_provider": _FakeProvider("tencent", {"get_profiles": [_hk_quote()]}),
+    }
+    providers.update(overrides)
+    return StockFundamentalSnapshotService(**providers)
+
+
+@pytest.mark.asyncio
+async def test_hk_snapshot_covers_supported_blocks():
+    response = await _hk_service().get_snapshot(FundamentalSnapshotRequest(symbol="00700.HK"))
     data = response.data
 
     assert response.status == "ok"
+    assert data.meta.name == "腾讯控股"
+    assert data.meta.full_name == "腾讯控股有限公司"
+    assert data.meta.market == "hk"
+    assert data.meta.industry == "软件服务"
+    assert data.meta.industry_sw is None
+    assert data.meta.currency == "HKD"
+    assert data.meta.listing_date == "2004-06-16"
+    assert data.meta.total_shares == 9092516289
+
+    assert data.profile.chairman == "马化腾"
+    assert data.profile.business_scope is None  # 港股无经营范围口径
+    assert data.profile.employees == 87412
+
+    # 无结构化分部构成：block 为 null 且进 missing
+    assert data.business_composition is None
+
+    valuation = data.quote_valuation
+    assert valuation.price == 445.2
+    assert valuation.market_cap_yi == 40500
+    assert valuation.pe_ttm == 16.26
+    # TTM = 2026Q1 + 2025年报 - 2025Q1
+    assert valuation.ttm_revenue_yi == 7660
+    assert valuation.ttm_net_profit_yi == 2353
+    assert valuation.pe_ttm_calculated == pytest.approx(17.21, abs=0.01)
+    assert valuation.ps_ttm == pytest.approx(5.29, abs=0.01)
+    assert valuation.ttm_deducted_net_profit_yi is None  # 港股无扣非口径
+
+    annual = data.profitability.annual[0]
+    assert annual.period == "20251231"
+    assert annual.revenue_yi == 7500
+    assert annual.net_profit_yi == 2250
+    assert annual.deducted_net_profit_yi is None
+    assert annual.operating_cash_flow_yi == 3030
+    assert annual.gross_margin_pct == 56.21
+    assert annual.roe_pct == 21.13
+    assert annual.asset_turnover == pytest.approx(0.3947, abs=0.001)
+    assert annual.equity_multiplier == pytest.approx(1.7593, abs=0.001)
+    assert data.profitability.latest_quarter.period == "20260331"
+
+    assert data.growth[0].revenue_yoy_pct == 13.86
+    assert data.growth[0].deducted_net_profit_yoy_pct is None
+
+    ops_annual = next(row for row in data.operations_solvency if row.period == "20251231")
+    assert ops_annual.liability_ratio_pct == pytest.approx(38.95, abs=0.01)
+    assert ops_annual.current_ratio == pytest.approx(1.5, abs=0.01)
+    # 有息负债=短期贷款+长期贷款+融资租赁负债(流动/非流动)
+    assert ops_annual.interest_bearing_debt_yi == 2050
+    assert ops_annual.long_term_equity_investment_yi == 2700
+    assert ops_annual.receivable_days_simple == pytest.approx(24.33, abs=0.01)
+    assert data.operations_solvency[0].period == "20260331"
+
+    flags = data.balance_sheet_flags
+    assert flags.investment_income_yi == 255  # 应占联营+合营公司溢利
+    assert flags.fair_value_gain_yi is None
+    assert flags.interest_bearing_debt_yi == 2050
+
+    assert data.shareholders.holder_count is None  # 港股不披露户数
+    assert data.shareholders.top10[0].name == "MIH Internet Holdings B.V."
+
+    # missing：无源 block + 港股口径缺口 + 通用研究层缺口
+    missing_items = {item.item for item in data.missing}
+    assert "business_composition" in missing_items
+    assert "deducted_net_profit" in missing_items
+    assert "holder_count" in missing_items
+    assert "goodwill" in missing_items
+    assert "peer_comparison" in missing_items
+    assert "business_composition" not in data.providers
+    assert any("HKD" in note for note in data.notes)
+    assert any("IFRS" in note for note in data.notes)
+
+
+@pytest.mark.asyncio
+async def test_hk_akshare_failure_degrades_financial_blocks_but_keeps_quote_and_holders():
+    timeout = ProviderError(error_type=ErrorType.TIMEOUT, provider="akshare", message="timed out")
+    failing = _FakeProvider(
+        "akshare",
+        {
+            method: timeout
+            for method in (
+                "get_hk_company_info",
+                "get_hk_main_indicators_annual",
+                "get_hk_main_indicators_report",
+                "get_hk_balance_sheet_annual",
+                "get_hk_balance_sheet_report",
+                "get_hk_cash_flow_annual",
+                "get_hk_income_statement_annual",
+            )
+        },
+    )
+    response = await _hk_service(financials_provider=failing).get_snapshot(
+        FundamentalSnapshotRequest(symbol="00700.HK")
+    )
+    data = response.data
+
     for block in (
         "meta",
         "profile",
-        "business_composition",
-        "quote_valuation",
         "profitability",
         "growth",
         "operations_solvency",
         "balance_sheet_flags",
-        "shareholders",
     ):
         assert getattr(data, block) is None
-    assert len(data.missing) == 9
-    assert all("unsupported_market" in item.reason for item in data.missing)
-    assert all("wind-mcp" in (item.hint or "") for item in data.missing)
-    assert any("wind-mcp" in note for note in data.notes)
-    assert data.providers == {}
-    assert profile_provider.calls == []
-    assert financials_provider.calls == []
-    assert quote_provider.calls == []
+    missing = {item.item for item in data.missing}
+    for block in (
+        "meta",
+        "profile",
+        "profitability",
+        "growth",
+        "operations_solvency",
+        "balance_sheet_flags",
+    ):
+        assert block in missing
+
+    assert data.quote_valuation.price == 445.2
+    assert data.quote_valuation.pe_ttm_calculated is None  # 无报告期指标无法算 TTM
+    assert data.shareholders.top10[0].name == "MIH Internet Holdings B.V."
 
 
 @pytest.mark.asyncio

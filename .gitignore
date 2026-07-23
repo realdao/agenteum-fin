@@ -70,7 +70,4 @@ Thumbs.db
 CLAUDE.md
 
 # Generated probe results
-playground/provider_probe_results.json
-docs/provider_probe_results.json
-playground/iwencai_probe_results.json
-playground/iwencai_hk_kline_probe_results.json
+playground/*.json

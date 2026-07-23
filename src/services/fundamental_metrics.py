@@ -247,7 +247,8 @@ def build_ttm_valuation(
 
     revenue = ttm("营业总收入")
     net = ttm("归母净利润")
-    deducted = ttm("扣非净利润")
+    # 指标整体缺失（如港股无扣非口径）时扣非字段保持 None，而非显示 0。
+    deducted = ttm("扣非净利润") if "扣非净利润" in abstract else None
     return {
         "ttm_revenue_yi": round_or_none(yi(revenue), 4),
         "ttm_net_profit_yi": round_or_none(yi(net), 4),

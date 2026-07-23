@@ -28,6 +28,9 @@ def normalize_symbol(raw: str) -> NormalizedSymbol:
             message=f"Invalid stock symbol: {raw}",
         )
     if explicit_hk or suffix == "HK" or len(value) == 5:
+        # 显式港股（HK 前缀或 .HK 后缀）时自动补零到 5 位，如 700.HK -> 00700.HK。
+        if explicit_hk or suffix == "HK":
+            value = value.zfill(5)
         if len(value) != 5:
             raise ProviderError(
                 error_type=ErrorType.INVALID_SYMBOL,

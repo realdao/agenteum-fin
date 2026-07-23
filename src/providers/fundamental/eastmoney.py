@@ -30,6 +30,7 @@ from src.utils.http import get_json
 from src.utils.symbols import NormalizedSymbol
 
 HSF10_PAGE_AJAX = "https://emweb.securities.eastmoney.com/PC_HSF10/{section}/PageAjax"
+HK_DATACENTER_URL = "https://datacenter.eastmoney.com/securities/api/data/v1/get"
 
 DEFAULT_HEADERS = {
     "User-Agent": "Mozilla/5.0",
@@ -149,6 +150,91 @@ class EastmoneyFundamentalProvider:
             params={"code": f"{symbol.exchange.upper()}{symbol.symbol}"},
             headers=DEFAULT_HEADERS,
         )
+
+    # ------------------------------------------------------------------ 港股
+    # 港股走 datacenter RPT_HKF10_* 接口（命名与字段经
+    # playground/hk_fundamental_probe.py 实测）。
+
+    async def get_hk_share_structure(self, symbol: NormalizedSymbol) -> CapitalStructure:
+        """RPT_HKF10_INFO_EQUITYSTR：最新变动日的股本结构（该表无 REPORT_DATE 列，
+        不能用 REPORT_DATE 排序，否则接口静默返回空）。"""
+        rows = await self._fetch_hk_datacenter(
+            symbol,
+            "RPT_HKF10_INFO_EQUITYSTR",
+            sort_columns="CHANGE_DATE",
+        )
+        if not rows:
+            raise _empty(self.name, "HK share structure")
+        latest = max(str(row.get("CHANGE_DATE") or "") for row in rows)
+        current = [row for row in rows if str(row.get("CHANGE_DATE") or "") == latest]
+        # SHARES_TYPE_CODE=="001" 为总计行（已发行普通股合计），其余为构成明细且
+        # 可能重复（如 001002/001002003 为同一笔的两个层级），不可直接求和。
+        total_row = next(
+            (row for row in current if str(row.get("SHARES_TYPE_CODE")) == "001"),
+            None,
+        )
+        if total_row is not None:
+            return CapitalStructure(total_shares=_num(total_row.get("SHARES_NUM")))
+        total = max((_num(row.get("SHARES_NUM")) or 0) for row in current)
+        return CapitalStructure(total_shares=total or None)
+
+    async def get_hk_major_holders(self, symbol: NormalizedSymbol) -> Shareholders:
+        """RPT_HKF10_EQUITYCHG_HOLDER：最新报告期的主要股东与董事持股。
+
+        港股无股东户数与十大流通股东口径，holder_count/controller 恒为 None；
+        top10 为披露的主要股东及董事持股，按持股比例降序。
+        """
+        rows = await self._fetch_hk_datacenter(
+            symbol,
+            "RPT_HKF10_EQUITYCHG_HOLDER",
+            sort_columns="REPORT_DATE",
+            page_size=200,
+        )
+        if not rows:
+            raise _empty(self.name, "HK major holders")
+        latest = max(str(row.get("REPORT_DATE") or "") for row in rows)
+        current = [row for row in rows if str(row.get("REPORT_DATE") or "") == latest]
+        current.sort(key=lambda row: _num(row.get("TOTAL_SHARES_RATIO")) or 0, reverse=True)
+        top10 = [
+            ShareholderItem(
+                rank=index + 1,
+                name=_str(row.get("HOLDER_NAME")),
+                holder_type=_str(row.get("EQUITY_TYPE")),
+                shares=_num(row.get("TOTAL_SHARES")),
+                ratio_pct=_num(row.get("TOTAL_SHARES_RATIO")),
+                change_shares=None,
+            )
+            for index, row in enumerate(current[:10])
+        ]
+        return Shareholders(top10_date=latest[:10] or None, top10=top10)
+
+    async def _fetch_hk_datacenter(
+        self,
+        symbol: NormalizedSymbol,
+        report_name: str,
+        *,
+        sort_columns: str,
+        page_size: int = 50,
+    ) -> list[dict[str, Any]]:
+        payload = await get_json(
+            self.client,
+            HK_DATACENTER_URL,
+            provider=self.name,
+            params={
+                "reportName": report_name,
+                "columns": "ALL",
+                "filter": f'(SECUCODE="{symbol.symbol}.HK")',
+                "pageNumber": "1",
+                "pageSize": str(page_size),
+                "sortColumns": sort_columns,
+                "sortTypes": "-1",
+                "source": "F10",
+                "client": "PC",
+            },
+            headers=DEFAULT_HEADERS,
+        )
+        rows = (payload.get("result") or {}).get("data") or []
+        return [row for row in rows if isinstance(row, dict)]
 
 
 def _map_holder(row: dict[str, Any], *, ratio_key: str) -> ShareholderItem:

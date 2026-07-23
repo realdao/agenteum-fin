@@ -215,6 +215,8 @@ class SnapshotMeta(BaseModel):
     full_name: str | None = None
     market: str | None = None
     exchange: str | None = None
+    # 市场通用行业分类（A 股为 null；港股为东财港股行业）。
+    industry: str | None = None
     industry_sw: str | None = None
     industry_csrc: str | None = None
     currency: str | None = None
