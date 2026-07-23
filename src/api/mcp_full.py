@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, get_args
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
@@ -13,6 +13,8 @@ from src.schemas import (
     F10Request,
     FallbackRecord,
     FinancialStatementsRequest,
+    IwencaiChannel,
+    IwencaiDomain,
     IwencaiQueryRequest,
     IwencaiSearchRequest,
     KlineRequest,
@@ -20,6 +22,15 @@ from src.schemas import (
     StockProfilesRequest,
     ToolErrorResponse,
 )
+
+
+def _enum_values(model: Any, field_name: str) -> list[str]:
+    """Extract a request model's Literal values to advertise them in the MCP
+    tool schema. The parameters stay typed as plain `str` on purpose: FastMCP
+    would validate a `Literal` annotation before our function runs and bypass
+    the structured invalid_request envelope, whereas `json_schema_extra` only
+    advertises the enum to clients and keeps validation in our schemas."""
+    return list(get_args(model.model_fields[field_name].annotation))
 
 
 def create_mcp_server(
@@ -54,10 +65,16 @@ def create_mcp_server(
     @mcp.tool()
     async def stock_kline(
         symbol: str,
-        period: str = "day",
+        period: Annotated[
+            str,
+            Field(json_schema_extra={"enum": _enum_values(KlineRequest, "period")}),
+        ] = "day",
         start_date: str | None = None,
         end_date: str | None = None,
-        adjust: str = "none",
+        adjust: Annotated[
+            str,
+            Field(json_schema_extra={"enum": _enum_values(KlineRequest, "adjust")}),
+        ] = "none",
         limit: int | None = None,
     ) -> dict:
         """Return daily or higher-period OHLCV K-line bars."""
@@ -96,7 +113,14 @@ def create_mcp_server(
     @mcp.tool()
     async def stock_financial_statements(
         symbol: str,
-        statement_type: str = "all",
+        statement_type: Annotated[
+            str,
+            Field(
+                json_schema_extra={
+                    "enum": _enum_values(FinancialStatementsRequest, "statement_type")
+                }
+            ),
+        ] = "all",
         periods: int = 8,
     ) -> dict:
         """Return A-share balance sheet, income statement, and cash flow statement data."""
@@ -116,7 +140,10 @@ def create_mcp_server(
     @mcp.tool()
     async def stock_f10(
         symbol: str,
-        section: str = "company_profile",
+        section: Annotated[
+            str,
+            Field(json_schema_extra={"enum": _enum_values(F10Request, "section")}),
+        ] = "company_profile",
         max_chars: int = 4000,
     ) -> dict:
         """Return bounded A-share F10 text sections."""
@@ -176,6 +203,7 @@ def create_mcp_server(
                     "sector=板块筛选；"
                     "index=指数行情（上证指数、沪深300、恒生指数等点位/涨跌幅）"
                 ),
+                json_schema_extra={"enum": list(get_args(IwencaiDomain))},
             ),
         ],
         page: int = 1,
@@ -243,6 +271,7 @@ def create_mcp_server(
                     "report=投研机构研究报告（分析逻辑、投资评级、目标价）；"
                     "announcement=A股/港股/基金/ETF公告（定期报告、分红派息、回购增持、资产重组）"
                 ),
+                json_schema_extra={"enum": list(get_args(IwencaiChannel))},
             ),
         ],
         size: int = 10,

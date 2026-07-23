@@ -53,6 +53,42 @@ async def test_mcp_server_can_be_created_with_fake_services():
 
 
 @pytest.mark.asyncio
+async def test_tool_schemas_advertise_closed_enums():
+    mcp = create_mcp_server()
+    tools = {tool.name: tool for tool in await mcp.list_tools()}
+
+    kline_props = tools["stock_kline"].inputSchema["properties"]
+    assert kline_props["period"]["enum"] == ["day", "week", "month", "quarter", "year"]
+    assert kline_props["adjust"]["enum"] == ["none", "qfq", "hfq"]
+    fin_props = tools["stock_financial_statements"].inputSchema["properties"]
+    assert fin_props["statement_type"]["enum"] == ["balance_sheet", "income", "cash_flow", "all"]
+    f10_props = tools["stock_f10"].inputSchema["properties"]
+    assert f10_props["section"]["enum"] == [
+        "company_profile",
+        "latest_notice",
+        "shareholders",
+        "capital_structure",
+        "financial_analysis",
+    ]
+    query_props = tools["iwencai_query"].inputSchema["properties"]
+    assert query_props["domain"]["enum"] == [
+        "finance",
+        "market",
+        "macro",
+        "industry",
+        "business",
+        "management",
+        "insresearch",
+        "astock",
+        "hkstock",
+        "sector",
+        "index",
+    ]
+    search_props = tools["iwencai_search"].inputSchema["properties"]
+    assert search_props["channel"]["enum"] == ["news", "report", "announcement"]
+
+
+@pytest.mark.asyncio
 async def test_mcp_tool_validation_errors_return_structured_error():
     mcp = create_mcp_server(kline_service=object())
 
