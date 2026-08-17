@@ -2,7 +2,7 @@
 
 Agenteum Fin is an HTTP-only MCP server for conservative stock research data access.
 
-It exposes one MCP endpoint at `/mcp/full` and normalizes selected A-share and Hong Kong stock data domains behind stable tool contracts.
+It exposes one MCP endpoint at `/mcp/full` and normalizes selected A-share and Hong Kong stock data domains behind stable tool contracts. `stock_kline` additionally serves on-exchange funds (ETF/LOF) and indices via the default tencent provider (SZ `399xxx` bare codes; SH `000xxx` indices need an explicit `.SH` suffix such as `000300.SH`).
 
 ## Run
 

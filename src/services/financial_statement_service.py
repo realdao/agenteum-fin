@@ -11,7 +11,7 @@ from src.schemas import (
 )
 from src.services.logging import logged_provider_call
 from src.services.retry import RetryPolicy, run_with_retries
-from src.utils.symbols import normalize_symbol
+from src.utils.symbols import normalize_symbol, require_stock_symbol
 
 ALL_STATEMENTS = ["balance_sheet", "income", "cash_flow"]
 
@@ -26,6 +26,7 @@ class FinancialStatementService:
         request: FinancialStatementsRequest,
     ) -> FinancialStatementsResponse:
         symbol = normalize_symbol(request.symbol)
+        require_stock_symbol(symbol)
         if symbol.market != "a_share":
             raise ProviderError(
                 error_type=ErrorType.UNSUPPORTED_MARKET,

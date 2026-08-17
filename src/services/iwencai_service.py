@@ -110,6 +110,24 @@ class IwencaiService:
                 f"共查到 {code_count} 条数据，当前返回第 {request.page} 页的 "
                 f"{len(datas)} 条。如需更多数据，请使用 page 参数翻页。"
             )
+        # 静默部分失败检测：本页应到未到即网关丢行（has_more=False 时所有剩余
+        # 条目都应在本页）。宁可误报提示核对，也不让残缺数据被当成完整结果。
+        if not has_more and (request.page - 1) * request.limit + len(datas) < code_count:
+            missing_count = code_count - (request.page - 1) * request.limit - len(datas)
+            envelope["partial_data_warning"] = (
+                f"网关匹配到 {code_count} 条数据但本页仅返回 {len(datas)} 条，"
+                f"缺失约 {missing_count} 条，且无任何报错提示。"
+                "请勿直接基于该残缺数据下结论。可先用 page+1 翻页确认是否为"
+                "网关分页截断；若翻页也无数据，则将实体逐个拆分为单独查询补齐。"
+            )
+        # 返回行数超过请求 limit：网关把 limit 当实体数，时间序列行数不受控，
+        # 提示调用方显式指定频率与区间（如"2026年6月以来月度"）后重查。
+        if len(datas) > request.limit:
+            envelope["data_volume_tip"] = (
+                f"网关返回 {len(datas)} 行，超过请求的 limit={request.limit}，"
+                "可能包含全量日度序列。若仅需趋势，请显式指定频率与区间"
+                "（如\u201c2026年6月以来月度\u201d）后重查，避免上下文过载。"
+            )
         if not datas:
             envelope["empty_data_tip"] = _empty_data_tip()
         return envelope

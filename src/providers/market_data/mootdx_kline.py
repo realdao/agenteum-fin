@@ -21,6 +21,8 @@ PERIOD_TO_MOOTDX_FREQUENCY = {
 class MootdxKlineProvider:
     name = "mootdx"
     supported_adjustments = {"none"}
+    # 基金/指数走 TDX 需另行验证市场参数映射，v1 先声明仅股票。
+    supported_asset_types = {"stock"}
 
     def __init__(self, *, quotes: Any | None = None) -> None:
         self.quotes = quotes

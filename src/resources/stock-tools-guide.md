@@ -10,7 +10,9 @@ Parameters: `symbol`, `period` (`day`, `week`, `month`, `quarter`, `year`), opti
 
 Coverage: A-shares and Hong Kong K-line both use the configured provider, default `tencent` (fqkline, web.ifzq.gtimg.cn), supporting `day`/`week`/`month` periods. `mootdx` remains available as a backup A-share provider via `AGENTEUM_FIN_A_KLINE_PROVIDER=mootdx`, supporting `day`/`week`/`month`/`quarter`/`year`.
 
-Limitations: v1 does not calculate technical indicators. Default `tencent` provider does not support `quarter` and `year` periods (returns `unsupported_period`) and bars expose `volume` but not `amount`. 北交所（`bj*`）codes are not well supported by the default tencent provider. mootdx alternative supports `quarter`/`year` and `amount`, but only `adjust=none`.
+Coverage extension (tencent provider): on-exchange funds (ETF/LOF - SH `50/51/56/58` prefixes such as `561360`, SZ `15/16/18` prefixes such as `159870`) and indices (SZ `399xxx` bare codes such as `399365`; SH `000xxx` indices require an explicit `.SH` suffix such as `000001.SH` for the Shanghai Composite or `000300.SH` for CSI 300 - bare `000001` stays the Ping An Bank stock). Indices only accept `adjust=none`. mootdx declares stocks only; fund/index symbols against mootdx return `unsupported_market`.
+
+Limitations: v1 does not calculate technical indicators. Default `tencent` provider does not support `quarter` and `year` periods (returns `unsupported_period`) and bars expose `volume` but not `amount`. 北交所（`bj*`）codes are not well supported by the default tencent provider. mootdx alternative supports `quarter`/`year` and `amount`, but only `adjust=none`. Stock-only tools: `stock_profile`, `stock_financial_statements`, `stock_fundamental_snapshot`, and `stock_announcements` reject ETF/fund and index symbols with an `invalid_symbol` routing hint (fund quotes -> `iwencai_query` domain `market`; fund/ETF announcements -> `iwencai_search` channel `announcement`; index quotes -> `iwencai_query` domain `index`).
 
 ## stock_profile
 

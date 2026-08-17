@@ -7,7 +7,7 @@ from src.errors import ErrorType, ProviderError
 from src.schemas import AnnouncementsData, AnnouncementsResponse
 from src.services.logging import logged_provider_call
 from src.services.retry import RetryPolicy, run_with_retries
-from src.utils.symbols import normalize_symbol
+from src.utils.symbols import normalize_symbol, require_stock_symbol
 
 
 class AnnouncementService:
@@ -17,6 +17,7 @@ class AnnouncementService:
 
     async def get_announcements(self, symbol: str, *, page_size: int) -> AnnouncementsResponse:
         normalized = normalize_symbol(symbol)
+        require_stock_symbol(normalized)
         if normalized.market != "a_share":
             raise ProviderError(
                 error_type=ErrorType.UNSUPPORTED_MARKET,

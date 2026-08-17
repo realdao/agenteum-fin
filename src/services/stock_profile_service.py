@@ -14,7 +14,7 @@ from src.schemas import (
 )
 from src.services.logging import logged_provider_call
 from src.services.retry import RetryPolicy, run_with_retries
-from src.utils.symbols import NormalizedSymbol, normalize_symbol
+from src.utils.symbols import NormalizedSymbol, normalize_symbol, stock_only_routing_message
 
 
 class StockProfileService:
@@ -109,6 +109,20 @@ def _normalize_symbols(
                     error=ErrorDetail(
                         type=exc.error_type.value,
                         message=exc.message,
+                        provider=None,
+                        retryable=False,
+                    ),
+                )
+            )
+            continue
+        if symbol.asset_type != "stock":
+            # 基金/指数混入批量查询时不阻断整批，按单标的错误返回路由提示。
+            errors.append(
+                StockProfileItemError(
+                    symbol=symbol.display_symbol,
+                    error=ErrorDetail(
+                        type=ErrorType.INVALID_SYMBOL.value,
+                        message=stock_only_routing_message(symbol.asset_type),
                         provider=None,
                         retryable=False,
                     ),

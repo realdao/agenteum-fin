@@ -37,7 +37,7 @@ from src.services import fundamental_metrics as fm
 from src.services import fundamental_metrics_hk as hkm
 from src.services.logging import logged_provider_call
 from src.services.retry import RetryPolicy, run_with_retries
-from src.utils.symbols import NormalizedSymbol, normalize_symbol
+from src.utils.symbols import NormalizedSymbol, normalize_symbol, require_stock_symbol
 
 # 数据源 -> (service 属性名, provider 方法名, 未配置时的 provider 标签)
 _A_SHARE_SOURCE_SPECS: dict[str, tuple[str, str, str]] = {
@@ -256,6 +256,7 @@ class StockFundamentalSnapshotService:
         request: FundamentalSnapshotRequest,
     ) -> FundamentalSnapshotResponse:
         symbol = normalize_symbol(request.symbol)
+        require_stock_symbol(symbol)
         spec = _SPEC_BY_MARKET.get(symbol.market)
         if spec is None:  # 防御：normalize_symbol 当前只产出 a_share/hk
             return self._market_not_supported(symbol)

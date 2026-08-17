@@ -30,6 +30,18 @@ async def test_financial_service_rejects_hk_symbols():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("raw", ["561360", "159870", "399365"])
+async def test_financial_service_rejects_fund_and_index_with_routing_hint(raw):
+    service = FinancialStatementService(provider=FakeFinancialProvider())
+
+    with pytest.raises(ProviderError) as raised:
+        await service.get_financial_statements(FinancialStatementsRequest(symbol=raw))
+
+    assert raised.value.error_type == ErrorType.INVALID_SYMBOL
+    assert "iwencai_query" in raised.value.message
+
+
+@pytest.mark.asyncio
 async def test_financial_service_all_requests_three_statement_groups():
     service = FinancialStatementService(provider=FakeFinancialProvider())
 

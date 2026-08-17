@@ -30,6 +30,8 @@ DEFAULT_BARS = 320
 class TencentKlineProvider:
     name = "tencent"
     supported_adjustments = {"none", "qfq", "hfq"}
+    # fqkline 端点按 {exchange}{code} 寻址，股票/场内基金/指数同一响应结构。
+    supported_asset_types = {"stock", "fund", "index"}
     url = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
 
     def __init__(self, *, client: httpx.AsyncClient) -> None:

@@ -99,6 +99,102 @@ async def test_query_has_more_false_on_last_page_omits_pagination_tip():
 
 
 @pytest.mark.asyncio
+async def test_query_silent_partial_failure_adds_warning():
+    # 实测场景：3 只 ETF 只返回 1 只且无报错。code_count=3、无更多页、
+    # 本页只到 1 条 -> 必须显式提示缺失。
+    raw = IwencaiRawResponse(
+        kind="json_dict",
+        body={"code_count": 3, "datas": [{"股票代码": "561360"}]},
+        trace_id="t" * 64,
+    )
+    service = IwencaiService(client=FakeIwencaiClient(raw=raw))
+
+    envelope = await service.query(query_request(page=1, limit=10))
+
+    assert envelope["code_count"] == 3
+    assert envelope["returned_count"] == 1
+    assert envelope["has_more"] is False
+    assert "缺失约 2 条" in envelope["partial_data_warning"]
+    assert "单独查询" in envelope["partial_data_warning"]
+
+
+@pytest.mark.asyncio
+async def test_query_complete_last_page_does_not_add_partial_warning():
+    # code_count=15、第 2 页恰好返回剩余 5 条 -> 完整，不告警。
+    raw = IwencaiRawResponse(
+        kind="json_dict",
+        body={"code_count": 15, "datas": [{} for _ in range(5)]},
+        trace_id="t" * 64,
+    )
+    service = IwencaiService(client=FakeIwencaiClient(raw=raw))
+
+    envelope = await service.query(query_request(page=2, limit=10))
+
+    assert envelope["has_more"] is False
+    assert "partial_data_warning" not in envelope
+
+
+@pytest.mark.asyncio
+async def test_query_middle_page_shortfall_does_not_add_partial_warning():
+    # 中间页（has_more=True）行数少于 limit 属正常分页，不触发部分失败告警。
+    raw = IwencaiRawResponse(
+        kind="json_dict",
+        body={"code_count": 25, "datas": [{} for _ in range(2)]},
+        trace_id="t" * 64,
+    )
+    service = IwencaiService(client=FakeIwencaiClient(raw=raw))
+
+    envelope = await service.query(query_request(page=1, limit=10))
+
+    assert envelope["has_more"] is True
+    assert "partial_data_warning" not in envelope
+
+
+@pytest.mark.asyncio
+async def test_query_missing_code_count_falls_back_without_partial_warning():
+    # 网关未返回 code_count 时回退 len(datas)，天然无缺失信号，不告警。
+    raw = IwencaiRawResponse(
+        kind="json_dict",
+        body={"datas": [{"股票代码": "561360"}]},
+        trace_id="t" * 64,
+    )
+    service = IwencaiService(client=FakeIwencaiClient(raw=raw))
+
+    envelope = await service.query(query_request())
+
+    assert envelope["code_count"] == 1
+    assert "partial_data_warning" not in envelope
+
+
+@pytest.mark.asyncio
+async def test_query_oversized_rows_add_volume_tip():
+    # 网关把 limit 当实体数、时间序列行数不受控：返回行数超 limit 时提示。
+    raw = IwencaiRawResponse(
+        kind="json_dict",
+        body={"code_count": 2, "datas": [{} for _ in range(200)]},
+        trace_id="t" * 64,
+    )
+    service = IwencaiService(client=FakeIwencaiClient(raw=raw))
+
+    envelope = await service.query(query_request(limit=10))
+
+    assert envelope["returned_count"] == 200
+    assert "超过请求的 limit=10" in envelope["data_volume_tip"]
+    assert "频率" in envelope["data_volume_tip"]
+
+
+@pytest.mark.asyncio
+async def test_query_rows_within_limit_do_not_add_volume_tip():
+    client = FakeIwencaiClient(raw=raw_from_fixture("iwencai_query_finance.json"))
+    service = IwencaiService(client=client)
+
+    envelope = await service.query(query_request(limit=10))
+
+    assert envelope["returned_count"] == 2
+    assert "data_volume_tip" not in envelope
+
+
+@pytest.mark.asyncio
 async def test_query_empty_datas_stays_ok_with_empty_tip():
     client = FakeIwencaiClient(raw=raw_from_fixture("iwencai_query_empty.json"))
     service = IwencaiService(client=client)

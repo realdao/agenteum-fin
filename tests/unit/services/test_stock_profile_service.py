@@ -59,6 +59,23 @@ async def test_profile_service_records_invalid_symbols_without_failing_batch():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("raw", ["561360", "159870", "399365", "000001.SH"])
+async def test_profile_service_rejects_fund_and_index_with_routing_hint(raw):
+    service = StockProfileService(providers=[FakeProfileProvider()])
+
+    response = await service.get_profiles([raw, "600519"])
+
+    assert response.status == "ok"
+    # 基金/指数不阻断整批：正常股票照常返回，非股票标的进入 errors。
+    assert [p.symbol.display_symbol for p in response.data.profiles] == ["600519.SH"]
+    assert len(response.data.errors) == 1
+    error = response.data.errors[0]
+    assert error.error.type == "invalid_symbol"
+    assert "stock_kline" in error.error.message
+    assert "iwencai_query" in error.error.message
+
+
+@pytest.mark.asyncio
 async def test_profile_service_marks_symbols_missing_from_provider_response():
     class PartialProvider(FakeProfileProvider):
         async def get_profiles(self, symbols):

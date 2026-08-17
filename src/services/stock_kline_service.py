@@ -37,6 +37,25 @@ class StockKlineService:
                 message="A-share K-line provider is not configured.",
             )
         provider = self.a_share_provider if symbol.market == "a_share" else self.hk_provider
+        # provider 资产类型能力门：默认收紧为仅股票，支持基金/指数的 provider
+        # 必须显式声明（tencent 已声明全部三种），避免第三方 provider 静默放行。
+        supported_asset_types = getattr(provider, "supported_asset_types", {"stock"})
+        if symbol.asset_type not in supported_asset_types:
+            raise ProviderError(
+                error_type=ErrorType.UNSUPPORTED_MARKET,
+                provider=provider.name,
+                message=(
+                    f"K-line provider '{provider.name}' does not support "
+                    f"{symbol.asset_type} symbols."
+                ),
+            )
+        # 指数没有除权除息，复权参数无意义，直接拒绝避免返回误导性数据。
+        if symbol.asset_type == "index" and request.adjust != "none":
+            raise ProviderError(
+                error_type=ErrorType.UNSUPPORTED_ADJUSTMENT,
+                provider=provider.name,
+                message="指数没有复权概念，adjust 仅支持 none。",
+            )
         supported_adjustments = getattr(provider, "supported_adjustments", {"none"})
         if request.adjust not in supported_adjustments:
             raise ProviderError(

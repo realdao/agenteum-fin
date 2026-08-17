@@ -77,7 +77,15 @@ def create_mcp_server(
         ] = "none",
         limit: int | None = None,
     ) -> dict:
-        """Return daily or higher-period OHLCV K-line bars."""
+        """Return daily or higher-period OHLCV K-line bars.
+
+        Accepts A-share stocks, on-exchange funds (ETF/LOF: SH 50/51/56/58,
+        SZ 15/16/18), and indices (SZ 39xxxx bare codes such as 399365;
+        SH 000xxx indices need an explicit .SH suffix such as 000001.SH,
+        because bare 000001 stays the Ping An Bank stock). Index symbols
+        only accept adjust=none. The default tencent provider serves all
+        three; mootdx serves stocks only.
+        """
         try:
             request = KlineRequest(
                 symbol=symbol,
@@ -100,6 +108,8 @@ def create_mcp_server(
 
         Accepts a batch of up to 40 symbols (A-share and Hong Kong can be mixed);
         per-symbol failures are reported in data.errors without failing the batch.
+        Stocks only: ETF/fund and index symbols are rejected with a routing hint
+        (fund quotes -> iwencai_query domain=market; K-lines -> stock_kline).
         """
         try:
             request = StockProfilesRequest(symbols=symbols)
@@ -123,7 +133,10 @@ def create_mcp_server(
         ] = "all",
         periods: int = 8,
     ) -> dict:
-        """Return A-share balance sheet, income statement, and cash flow statement data."""
+        """Return A-share balance sheet, income statement, and cash flow statement data.
+
+        Stocks only: ETF/fund and index symbols are rejected with a routing hint.
+        """
         try:
             request = FinancialStatementsRequest(
                 symbol=symbol,
@@ -173,7 +186,8 @@ def create_mcp_server(
         structured business composition (in data.missing with a wind-mcp
         hint), IFRS line items, and no holder count — see data.notes for
         calibers. Use stock_financial_statements for raw A-share statement
-        line items and stock_announcements for disclosures.
+        line items and stock_announcements for disclosures. Stocks only:
+        ETF/fund and index symbols are rejected with a routing hint.
         """
         try:
             request = FundamentalSnapshotRequest(
@@ -190,7 +204,11 @@ def create_mcp_server(
 
     @mcp.tool()
     async def stock_announcements(symbol: str, page_size: int = 20) -> dict:
-        """Return A-share listed-company announcements."""
+        """Return A-share listed-company announcements.
+
+        Stocks only: ETF/fund and index symbols are rejected with a routing hint
+        (fund/ETF announcements -> iwencai_search channel=announcement).
+        """
         try:
             request = PageSizeRequest(symbol=symbol, page_size=page_size)
             response = await announcement_service.get_announcements(

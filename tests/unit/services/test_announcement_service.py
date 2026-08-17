@@ -22,6 +22,18 @@ async def test_announcement_service_rejects_hk_symbols():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("raw", ["561360", "159870", "399365"])
+async def test_announcement_service_rejects_fund_and_index_with_routing_hint(raw):
+    service = AnnouncementService(provider=FakeAnnouncementProvider())
+
+    with pytest.raises(ProviderError) as raised:
+        await service.get_announcements(raw, page_size=20)
+
+    assert raised.value.error_type == ErrorType.INVALID_SYMBOL
+    assert "iwencai" in raised.value.message
+
+
+@pytest.mark.asyncio
 async def test_announcement_service_returns_a_share_response():
     service = AnnouncementService(provider=FakeAnnouncementProvider())
 

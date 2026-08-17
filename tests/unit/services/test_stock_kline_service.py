@@ -17,7 +17,8 @@ async def test_hk_kline_returns_unsupported_market_when_provider_is_none():
 
 
 class FakeAshareKlineProvider:
-    name = "mootdx"
+    name = "tencent"
+    supported_asset_types = {"stock", "fund", "index"}
 
     def __init__(self, *, error_type=None, failures: int | None = None):
         self.error_type = error_type
@@ -48,7 +49,7 @@ async def test_a_share_kline_success_uses_configured_provider():
 
     response = await service.get_kline(KlineRequest(symbol="600519"))
 
-    assert response.provider == "mootdx"
+    assert response.provider == "tencent"
     assert response.data.bars[0].date == "2026-05-22"
 
 
@@ -88,7 +89,7 @@ async def test_kline_retries_same_provider_when_configured():
 
     response = await service.get_kline(KlineRequest(symbol="600519"))
 
-    assert response.provider == "mootdx"
+    assert response.provider == "tencent"
     assert provider.calls == 2
 
 
@@ -109,3 +110,53 @@ async def test_kline_forwards_date_filters_and_limit_to_provider():
     assert provider.requests[0].start_date == "2026-01-01"
     assert provider.requests[0].end_date == "2026-05-22"
     assert provider.requests[0].limit == 10
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("symbol", ["561360", "159870", "399365", "000300.SH"])
+async def test_kline_accepts_fund_and_index_symbols(symbol):
+    provider = FakeAshareKlineProvider()
+    service = StockKlineService(a_share_provider=provider, hk_provider=None)
+
+    response = await service.get_kline(KlineRequest(symbol=symbol))
+
+    assert response.status == "ok"
+    assert response.data.symbol.asset_type in ("fund", "index")
+    assert provider.calls == 1
+
+
+@pytest.mark.asyncio
+async def test_kline_rejects_index_with_adjustment():
+    service = StockKlineService(a_share_provider=FakeAshareKlineProvider(), hk_provider=None)
+
+    with pytest.raises(ProviderError) as raised:
+        await service.get_kline(KlineRequest(symbol="399365", adjust="qfq"))
+
+    assert raised.value.error_type == ErrorType.UNSUPPORTED_ADJUSTMENT
+
+
+class StockOnlyKlineProvider(FakeAshareKlineProvider):
+    name = "mootdx"
+    supported_asset_types = {"stock"}
+
+
+@pytest.mark.asyncio
+async def test_kline_rejects_fund_for_stock_only_provider():
+    service = StockKlineService(a_share_provider=StockOnlyKlineProvider(), hk_provider=None)
+
+    with pytest.raises(ProviderError) as raised:
+        await service.get_kline(KlineRequest(symbol="561360"))
+
+    assert raised.value.error_type == ErrorType.UNSUPPORTED_MARKET
+    assert raised.value.provider == "mootdx"
+
+
+@pytest.mark.asyncio
+async def test_kline_capability_gate_precedes_adjustment_check():
+    # index + 仅股票 provider + qfq：能力门（UNSUPPORTED_MARKET）先于复权校验。
+    service = StockKlineService(a_share_provider=StockOnlyKlineProvider(), hk_provider=None)
+
+    with pytest.raises(ProviderError) as raised:
+        await service.get_kline(KlineRequest(symbol="399365", adjust="qfq"))
+
+    assert raised.value.error_type == ErrorType.UNSUPPORTED_MARKET
